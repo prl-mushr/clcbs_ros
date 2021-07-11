@@ -1,0 +1,3 @@
+[submodule "include/CL-CBS"]
+	path = include/CL-CBS
+	url = https://github.com/APRIL-ZJU/CL-CBS.git
