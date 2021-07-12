@@ -1,4 +1,5 @@
 #pragma once
+
 #include <ompl/base/State.h>
 #include <ompl/base/spaces/DubinsStateSpace.h>
 #include <ompl/base/spaces/ReedsSheppStateSpace.h>
@@ -16,8 +17,6 @@
 
 #include <CL-CBS/include/neighbor.hpp>
 #include <CL-CBS/include/planresult.hpp>
-
-using namespace libMultiRobotPlanning;
 
 typedef ompl::base::SE2StateSpace::StateType OmplState;
 typedef boost::geometry::model::d2::point_xy<double> Point;
@@ -78,6 +77,8 @@ static inline float normalizeHeadingRad(float t) {
 // calculate agent collision more precisely BUT need LONGER time
 // #define PRECISE_COLLISION
 
+namespace clcbs_ros {
+
 struct Location {
   Location(double x, double y) : x(x), y(y) {}
   double x;
@@ -95,18 +96,6 @@ struct Location {
     return os << "(" << c.x << "," << c.y << ")";
   }
 };
-
-namespace std {
-template <>
-struct hash<Location> {
-  size_t operator()(const Location& s) const {
-    size_t seed = 0;
-    boost::hash_combine(seed, s.x);
-    boost::hash_combine(seed, s.y);
-    return seed;
-  }
-};
-}  // namespace std
 
 struct State {
   State(double x, double y, double yaw, int time = 0)
@@ -213,20 +202,6 @@ struct State {
   Point corner1, corner2, corner3, corner4;
 };
 
-namespace std {
-template <>
-struct hash<State> {
-  size_t operator()(const State& s) const {
-    size_t seed = 0;
-    boost::hash_combine(seed, s.time);
-    boost::hash_combine(seed, s.x);
-    boost::hash_combine(seed, s.y);
-    boost::hash_combine(seed, s.yaw);
-    return seed;
-  }
-};
-}  // namespace std
-
 using Action = int;  // int<7 int ==6 wait
 
 using Cost = double;
@@ -279,7 +254,12 @@ struct Constraint {
   }
 };
 
+} // namespace clcbs_ros
+
 namespace std {
+
+using clcbs_ros::Constraint;
+
 template <>
 struct hash<Constraint> {
   size_t operator()(const Constraint& s) const {
@@ -292,7 +272,10 @@ struct hash<Constraint> {
     return seed;
   }
 };
-}  // namespace std
+
+} // namespace std
+
+namespace clcbs_ros {
 
 // FIXME: modify data struct, it's not the best option
 struct Constraints {
@@ -317,7 +300,79 @@ struct Constraints {
   }
 };
 
-namespace libMultiRobotPlanning {
+struct Waypoints {
+  Waypoints() = default;
+  Waypoints(std::vector<State> points) : points(points) {}
+  std::vector<State> points;
+
+  bool operator<(const Waypoints& other) const {
+    return points < other.points;
+  }
+
+  bool operator==(const Waypoints& other) const {
+    return points == other.points;
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Waypoints& c) {
+    for (const auto& p : c.points) {
+        os << p << " ";
+    }
+    return os;
+  }
+
+  State& operator[](int idx) {
+    return points[idx];
+  }
+};
+
+} // namespace clcbs_ros
+
+namespace std {
+
+using clcbs_ros::Location;
+using clcbs_ros::State;
+using clcbs_ros::Waypoints;
+
+template <>
+struct hash<Location> {
+  size_t operator()(const Location& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.x);
+    boost::hash_combine(seed, s.y);
+    return seed;
+  }
+};
+
+template <>
+struct hash<State> {
+  size_t operator()(const State& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.time);
+    boost::hash_combine(seed, s.x);
+    boost::hash_combine(seed, s.y);
+    boost::hash_combine(seed, s.yaw);
+    return seed;
+  }
+};
+
+template <>
+struct hash<Waypoints> {
+  size_t operator()(const Waypoints& s) const {
+    size_t seed = 0;
+    for (const auto& p: s.points) {
+      boost::hash_combine(seed, p.x);
+      boost::hash_combine(seed, p.y);
+    }
+    return seed;
+  }
+};
+
+}  // namespace std
+
+namespace clcbs_ros {
+
+using libMultiRobotPlanning::Neighbor;
+using libMultiRobotPlanning::PlanResult;
 
 class Environment {
  public:
@@ -810,4 +865,4 @@ class Environment {
   int m_lowLevelExpanded;
 };
 
-}  // namespace libMultiRobotPlanning
+}  // namespace clcbs_ros
