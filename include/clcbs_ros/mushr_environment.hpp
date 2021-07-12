@@ -5,6 +5,7 @@
 #include <ompl/base/spaces/SE2StateSpace.h>
 
 #include <boost/functional/hash.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
@@ -15,6 +16,12 @@
 
 #include <CL-CBS/include/neighbor.hpp>
 #include <CL-CBS/include/planresult.hpp>
+
+using namespace libMultiRobotPlanning;
+
+typedef ompl::base::SE2StateSpace::StateType OmplState;
+typedef boost::geometry::model::d2::point_xy<double> Point;
+typedef boost::geometry::model::segment<Point> Segment;
 
 namespace Constants {
     
@@ -68,27 +75,250 @@ static inline float normalizeHeadingRad(float t) {
 }
 }  // namespace Constants
 
+// calculate agent collision more precisely BUT need LONGER time
+// #define PRECISE_COLLISION
+
+struct Location {
+  Location(double x, double y) : x(x), y(y) {}
+  double x;
+  double y;
+
+  bool operator<(const Location& other) const {
+    return std::tie(x, y) < std::tie(other.x, other.y);
+  }
+
+  bool operator==(const Location& other) const {
+    return std::tie(x, y) == std::tie(other.x, other.y);
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Location& c) {
+    return os << "(" << c.x << "," << c.y << ")";
+  }
+};
+
+namespace std {
+template <>
+struct hash<Location> {
+  size_t operator()(const Location& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.x);
+    boost::hash_combine(seed, s.y);
+    return seed;
+  }
+};
+}  // namespace std
+
+struct State {
+  State(double x, double y, double yaw, int time = 0)
+      : time(time), x(x), y(y), yaw(yaw) {
+    rot.resize(2, 2);
+    rot(0, 0) = cos(-this->yaw);
+    rot(0, 1) = -sin(-this->yaw);
+    rot(1, 0) = sin(-this->yaw);
+    rot(1, 1) = cos(-this->yaw);
+#ifdef PRECISE_COLLISION
+    corner1 = Point(
+        this->x -
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LB * 1.1, 2)) *
+                cos(atan2(Constants::carWidth / 2, Constants::LB) - this->yaw),
+        this->y -
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LB * 1.1, 2)) *
+                sin(atan2(Constants::carWidth / 2, Constants::LB) - this->yaw));
+    corner2 = Point(
+        this->x -
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LB * 1.1, 2)) *
+                cos(atan2(Constants::carWidth / 2, Constants::LB) + this->yaw),
+        this->y +
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LB * 1.1, 2)) *
+                sin(atan2(Constants::carWidth / 2, Constants::LB) + this->yaw));
+    corner3 = Point(
+        this->x +
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LF * 1.1, 2)) *
+                cos(atan2(Constants::carWidth / 2, Constants::LF) - this->yaw),
+        this->y +
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LF * 1.1, 2)) *
+                sin(atan2(Constants::carWidth / 2, Constants::LF) - this->yaw));
+    corner4 = Point(
+        this->x +
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LF * 1.1, 2)) *
+                cos(atan2(Constants::carWidth / 2, Constants::LF) + this->yaw),
+        this->y -
+            sqrt(pow(Constants::carWidth / 2 * 1.1, 2) +
+                 pow(Constants::LF * 1.1, 2)) *
+                sin(atan2(Constants::carWidth / 2, Constants::LF) + this->yaw));
+#endif
+  }
+
+  State() = default;
+
+  bool operator==(const State& s) const {
+    return std::tie(time, x, y, yaw) == std::tie(s.time, s.x, s.y, s.yaw);
+  }
+
+  bool agentCollision(const State& other) const {
+#ifndef PRECISE_COLLISION
+    if (pow(this->x - other.x, 2) + pow(this->y - other.y, 2) <
+        pow(2 * Constants::LF, 2) + pow(Constants::carWidth, 2))
+      return true;
+    return false;
+#else
+    std::vector<Segment> rectangle1{Segment(this->corner1, this->corner2),
+                                    Segment(this->corner2, this->corner3),
+                                    Segment(this->corner3, this->corner4),
+                                    Segment(this->corner4, this->corner1)};
+    std::vector<Segment> rectangle2{Segment(other.corner1, other.corner2),
+                                    Segment(other.corner2, other.corner3),
+                                    Segment(other.corner3, other.corner4),
+                                    Segment(other.corner4, other.corner1)};
+    for (auto seg1 = rectangle1.begin(); seg1 != rectangle1.end(); seg1++)
+      for (auto seg2 = rectangle2.begin(); seg2 != rectangle2.end(); seg2++) {
+        if (boost::geometry::intersects(*seg1, *seg2)) return true;
+      }
+    return false;
+#endif
+  }
+
+  bool obsCollision(const Location& obstacle) const {
+    boost::numeric::ublas::matrix<double> obs(1, 2);
+    obs(0, 0) = obstacle.x - this->x;
+    obs(0, 1) = obstacle.y - this->y;
+
+    auto rotated_obs = boost::numeric::ublas::prod(obs, rot);
+    if (rotated_obs(0, 0) > -Constants::LB - Constants::obsRadius &&
+        rotated_obs(0, 0) < Constants::LF + Constants::obsRadius &&
+        rotated_obs(0, 1) > -Constants::carWidth / 2.0 - Constants::obsRadius &&
+        rotated_obs(0, 1) < Constants::carWidth / 2.0 + Constants::obsRadius)
+      return true;
+    return false;
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const State& s) {
+    return os << "(" << s.x << "," << s.y << ":" << s.yaw << ")@" << s.time;
+  }
+
+  int time;
+  double x;
+  double y;
+  double yaw;
+
+ private:
+  boost::numeric::ublas::matrix<double> rot;
+  Point corner1, corner2, corner3, corner4;
+};
+
+namespace std {
+template <>
+struct hash<State> {
+  size_t operator()(const State& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.time);
+    boost::hash_combine(seed, s.x);
+    boost::hash_combine(seed, s.y);
+    boost::hash_combine(seed, s.yaw);
+    return seed;
+  }
+};
+}  // namespace std
+
+using Action = int;  // int<7 int ==6 wait
+
+using Cost = double;
+
+struct Conflict {
+  int time;
+  size_t agent1;
+  size_t agent2;
+
+  State s1;
+  State s2;
+
+  friend std::ostream& operator<<(std::ostream& os, const Conflict& c) {
+    os << c.time << ": Collision [ " << c.agent1 << c.s1 << " , " << c.agent2
+       << c.s2 << " ]";
+    return os;
+  }
+};
+
+struct Constraint {
+  Constraint(int time, State s, size_t agentid)
+      : time(time), s(s), agentid(agentid) {}
+  Constraint() = default;
+  int time;
+  State s;
+  size_t agentid;
+
+  bool operator<(const Constraint& other) const {
+    return std::tie(time, s.x, s.y, s.yaw, agentid) <
+           std::tie(other.time, other.s.x, other.s.y, other.s.yaw,
+                    other.agentid);
+  }
+
+  bool operator==(const Constraint& other) const {
+    return std::tie(time, s.x, s.y, s.yaw, agentid) ==
+           std::tie(other.time, other.s.x, other.s.y, other.s.yaw,
+                    other.agentid);
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Constraint& c) {
+    return os << "Constraint[" << c.time << "," << c.s << "from " << c.agentid
+              << "]";
+  }
+
+  bool satisfyConstraint(const State& state) const {
+    if (state.time < this->time ||
+        state.time > this->time + Constants::constraintWaitTime)
+      return true;
+    return !this->s.agentCollision(state);
+  }
+};
+
+namespace std {
+template <>
+struct hash<Constraint> {
+  size_t operator()(const Constraint& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.time);
+    boost::hash_combine(seed, s.s.x);
+    boost::hash_combine(seed, s.s.y);
+    boost::hash_combine(seed, s.s.yaw);
+    boost::hash_combine(seed, s.agentid);
+    return seed;
+  }
+};
+}  // namespace std
+
+// FIXME: modify data struct, it's not the best option
+struct Constraints {
+  std::unordered_set<Constraint> constraints;
+
+  void add(const Constraints& other) {
+    constraints.insert(other.constraints.begin(), other.constraints.end());
+  }
+
+  bool overlap(const Constraints& other) {
+    for (const auto& c : constraints) {
+      if (other.constraints.count(c) > 0) return true;
+    }
+    return false;
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Constraints& cs) {
+    for (const auto& c : cs.constraints) {
+      os << c << std::endl;
+    }
+    return os;
+  }
+};
+
 namespace libMultiRobotPlanning {
 
-using libMultiRobotPlanning::Neighbor;
-using libMultiRobotPlanning::PlanResult;
-using namespace libMultiRobotPlanning;
-typedef ompl::base::SE2StateSpace::StateType OmplState;
-typedef boost::geometry::model::d2::point_xy<double> Point;
-typedef boost::geometry::model::segment<Point> Segment;
-/**
- * @brief  Environment class
- *
- * @tparam Location
- * @tparam State
- * @tparam Action
- * @tparam Cost
- * @tparam Conflict
- * @tparam Constraint
- * @tparam Constraints
- */
-template <typename Location, typename State, typename Action, typename Cost,
-          typename Conflict, typename Constraint, typename Constraints>
 class Environment {
  public:
   Environment(size_t maxx, size_t maxy, std::unordered_set<Location> obstacles,
