@@ -116,9 +116,9 @@ private:
     int extra = 0;
     // init goals
     for (auto& goal: m_goal_pose) {
-      std::vector<Location> ls;
-      for(auto& waypoint: goal.points) {
-        ls.emplace_back(scalex(waypoint.x), scaley(waypoint.y));
+      std::vector<State> ls;
+      for (auto& waypoint: goal.points) {
+        ls.emplace_back(scalex(waypoint.x), scaley(waypoint.y), waypoint.yaw);
       }
       goals.emplace_back(ls);
     }
@@ -144,49 +144,48 @@ private:
     std::vector<PlanResult<State, Action, Cost>> solution;
     std::cout << "x: " << dimx << ", y: " << dimy << ", agent: " << m_num_agent << ", task: "<< m_goal_pose.size() << ", waypoint: " << m_num_waypoint << std::endl;
 
-    // TODO fix this
     startTime.push_back(0);
-    while (goals.size() > 0 && success) {
-      extra = m_num_agent - goals.size() > 0 ? m_num_agent - goals.size() : 0;
-      for (int i = 0; i < extra; i++) {
-        std::vector<Location> ls;
-        ls.emplace_back(-i - 1, -i - 1);
-        goals.emplace_back(ls);
+    for (int i = 0; i < m_num_waypoint && success; i++) {
+      // get goals for current waypoint
+      std::vector<State> cur_goals;
+      for (auto& waypoints : goals) {
+        cur_goals.emplace_back(waypoints[i]);
       }
-      Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, goals);
+
+      Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, cur_goals);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           cbs(mapf);
       
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
       success &= cbs.search(startStates, sub_solution);
       startStates.clear();
-      std::vector<Waypoints>::iterator it;
       int ct = 0;
       int sub_makespan = 0;
       for (const auto& s : sub_solution) {
         State last = s.states.back().first;
-        it = std::find_if(goals.begin(), goals.end(),
-          std::bind(goal_compare, std::placeholders::_1, last.x, last.y));
-        if (it != goals.end()) {
-          ct++;
-          goals.erase(it);
-        }
         startStates.emplace_back(State(0, last.x, last.y, 0));
         sub_makespan = std::max<int64_t>(sub_makespan, s.cost);
       }
       startTime.push_back(sub_makespan);
-      solution.insert(solution.end(), sub_solution.begin(), sub_solution.end());
-      if (success && goals.size() - extra > 0) {
-        std::cout << "finish " << ct + extra << " tasks, " << goals.size() - extra << " task remaining" << std::endl;
-      } else if (success) {
-        std::cout << "planner success" << std::endl;
-        break;
+      // TODO consider using previous approach of inserting sub_solution into solution
+      // and chaining plans together when publishing messages
+      if (solution.empty()) {
+        for (const auto& s : sub_solution) {
+          solution.emplace_back(s);
+        }
       } else {
-        std::cout << "planner failed" << std::endl;
-        break;
+        for (int i = 0; i < solution.size(); i++) {
+          combinePlans(solution[i], sub_solution[i]);
+        }
       }
-      std::cout << "---------------------" << std::endl;
     }
+
+    if (success) {
+      std::cout << "planner success" << std::endl;
+    } else {
+      std::cout << "planner failed" << std::endl;
+    }
+
     create_border(1, 1, 1, 0.1);
 
     if (success) {
@@ -204,39 +203,6 @@ private:
             if (solution[j].states[i].second == 0) {
               time += startTime[t] - prev_time;
             }
-            // switch (solution[j].actions[i].first) {
-            //   case Action::Up: 
-            //     p.orientation.x = 0;
-            //     p.orientation.y = 0;
-            //     p.orientation.z = 0.707;
-            //     p.orientation.w = 0.707;
-            //     break;
-            //   case Action::Down:
-            //     p.orientation.x = 0;
-            //     p.orientation.y = 0;
-            //     p.orientation.z = 0.707;
-            //     p.orientation.w = -0.707;
-            //     break;
-            //   case Action::Left: 
-            //     p.orientation.x = 0;
-            //     p.orientation.y = 0;
-            //     p.orientation.z = 1;
-            //     p.orientation.w = 0;
-            //     break;
-            //   case Action::Right:
-            //     p.orientation.x = 0;
-            //     p.orientation.y = 0;
-            //     p.orientation.z = 0;
-            //     p.orientation.w = 1; 
-            //     break;
-            // //
-            //   case Action::Wait:
-            //     if (i < solution[j].states.size() - 1) {
-            //       time++;
-            //       continue;
-            //     }
-            //     break;
-            // }
                         
             double x = r_scalex(solution[j].states[i].first.x);
             double y = r_scaley(solution[j].states[i].first.y);
@@ -377,7 +343,15 @@ private:
   }
 
   double yawFromQuat(const geometry_msgs::Quaternion& q) {
-    return atan2(2.0f * (q.w * q.z + q.x * q.y), q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z);
+    return atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));
+  }
+
+  // TODO offset plan2 times by the sum of previous makespans
+  void combinePlans(PlanResult<State, Action, Cost>& plan1, const PlanResult<State, Action, Cost>& plan2) {
+    plan1.states.insert(plan1.states.end(), plan2.states.begin(), plan2.states.end());
+    plan1.actions.insert(plan1.actions.end(), plan2.actions.begin(), plan2.actions.end());
+    plan1.cost += plan2.cost;
+    plan1.fmin += plan2.fmin;
   }
 
   std::vector<ros::Subscriber> m_sub_car_pose;
