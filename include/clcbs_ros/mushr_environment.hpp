@@ -376,7 +376,7 @@ using libMultiRobotPlanning::PlanResult;
 
 class Environment {
  public:
-  Environment(size_t maxx, size_t maxy, std::unordered_set<Location> obstacles,
+  Environment(int maxx, int maxy, std::unordered_set<Location> obstacles,
               std::multimap<int, State> dynamic_obstacles,
               std::vector<State> goals)
       : m_obstacles(std::move(obstacles)),
@@ -386,8 +386,8 @@ class Environment {
         m_lastGoalConstraint(-1),
         m_highLevelExpanded(0),
         m_lowLevelExpanded(0) {
-    m_dimx = (int)maxx / Constants::mapResolution;
-    m_dimy = (int)maxy / Constants::mapResolution;
+    m_dimx = maxx / Constants::mapResolution;
+    m_dimy = maxy / Constants::mapResolution;
     // std::cout << "env build " << m_dimx << " " << m_dimy << " "
     //           << m_obstacles.size() << std::endl;
     holonomic_cost_maps = std::vector<std::vector<std::vector<double>>>(
@@ -411,7 +411,7 @@ class Environment {
 
   /// High Level Environment functions
   bool getFirstConflict(
-      const std::vector<PlanResult<State, Action, double>> &solution,
+      const std::vector<PlanResult<State, Action, Cost>> &solution,
       Conflict &result) {
     int max_t = 0;
     for (const auto &sol : solution) {
@@ -685,7 +685,7 @@ class Environment {
 
  private:
   State getState(size_t agentIdx,
-                 const std::vector<PlanResult<State, Action, double>> &solution,
+                 const std::vector<PlanResult<State, Action, Cost>> &solution,
                  size_t t) {
     assert(agentIdx < solution.size());
     if (t < solution[agentIdx].states.size()) {
