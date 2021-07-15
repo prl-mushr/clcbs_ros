@@ -151,6 +151,10 @@ struct State {
     return std::tie(time, x, y, yaw) == std::tie(s.time, s.x, s.y, s.yaw);
   }
 
+  bool operator<(const State& s) const {
+    return std::tie(time, x, y, yaw) < std::tie(s.time, s.x, s.y, s.yaw);
+  }
+
   bool agentCollision(const State& other) const {
 #ifndef PRECISE_COLLISION
     if (pow(this->x - other.x, 2) + pow(this->y - other.y, 2) <
