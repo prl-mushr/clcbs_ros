@@ -1,18 +1,14 @@
 #pragma once
 
 #include <ros/ros.h>
-#include <ros/time.h>
-#include <std_msgs/String.h>
-#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <visualization_msgs/Marker.h>
 
 #include <CL-CBS/include/cl_cbs.hpp>
 
-// #include "clcbs_ros/GoalPoseArray.h"
+#include "clcbs_ros/GoalPoseArray.h"
 #include "clcbs_ros/mushr_environment.hpp"
 
 namespace clcbs_ros {
@@ -98,7 +94,7 @@ private:
     for (auto &goal : msg->goals) {
       m_goal_pose.emplace_back();
       for (auto &pose : goal.poses) {
-        m_goal_pose.back().points.emplace_back(pose.position.x, pose.position.y);
+        m_goal_pose.back().points.emplace_back(pose.position.x, pose.position.y, yawFromQuat(pose.orientation));
       }
     }
     if (isReady()) {
@@ -131,7 +127,7 @@ private:
     }
     // init start states
     for(auto& pos: m_car_pose) {
-      startStates.emplace_back(0, scalex(pos.x), scaley(pos.y), 0); 
+      startStates.emplace_back(scalex(pos.x), scaley(pos.y), pos.yaw);
     }
 
     int mkid = 0; //visualize
@@ -163,21 +159,11 @@ private:
       int sub_makespan = 0;
       for (const auto& s : sub_solution) {
         State last = s.states.back().first;
-        startStates.emplace_back(State(0, last.x, last.y, 0));
+        startStates.emplace_back(State(last.x, last.y, last.yaw));
         sub_makespan = std::max<int64_t>(sub_makespan, s.cost);
       }
       startTime.push_back(sub_makespan);
-      // TODO consider using previous approach of inserting sub_solution into solution
-      // and chaining plans together when publishing messages
-      if (solution.empty()) {
-        for (const auto& s : sub_solution) {
-          solution.emplace_back(s);
-        }
-      } else {
-        for (int i = 0; i < solution.size(); i++) {
-          combinePlans(solution[i], sub_solution[i]);
-        }
-      }
+      solution.insert(solution.end(), sub_solution.begin(), sub_solution.end());
     }
 
     if (success) {
@@ -344,14 +330,6 @@ private:
 
   double yawFromQuat(const geometry_msgs::Quaternion& q) {
     return atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));
-  }
-
-  // TODO offset plan2 times by the sum of previous makespans
-  void combinePlans(PlanResult<State, Action, Cost>& plan1, const PlanResult<State, Action, Cost>& plan2) {
-    plan1.states.insert(plan1.states.end(), plan2.states.begin(), plan2.states.end());
-    plan1.actions.insert(plan1.actions.end(), plan2.actions.begin(), plan2.actions.end());
-    plan1.cost += plan2.cost;
-    plan1.fmin += plan2.fmin;
   }
 
   std::vector<ros::Subscriber> m_sub_car_pose;
