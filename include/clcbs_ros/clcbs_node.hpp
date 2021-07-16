@@ -4,6 +4,7 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <visualization_msgs/Marker.h>
 
 #include <CL-CBS/include/cl_cbs.hpp>
@@ -329,7 +330,11 @@ private:
   }
 
   double yawFromQuat(const geometry_msgs::Quaternion& q) {
-    return atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));
+    tf2::Quaternion quat;
+    tf2::fromMsg(q, quat);
+    double r, p, y;
+    tf2::Matrix3x3(quat.normalized()).getRPY(r, p, y);
+    return y;
   }
 
   std::vector<ros::Subscriber> m_sub_car_pose;
