@@ -23,7 +23,6 @@ public:
     : m_planning(false),
       m_ini_obs(false),
       m_ini_goal(false) {
-    nh.getParam("/mushr_coordination/w", m_w);
     nh.getParam("/mushr_coordination/num_waypoint", m_num_waypoint);
     nh.getParam("/mushr_coordination/num_agent", m_num_agent);
     m_car_pose = std::vector<State>(m_num_agent);
@@ -354,7 +353,6 @@ private:
   bool m_ini_goal;
   int m_num_agent;
   int m_num_waypoint;
-  double m_w;
   double m_scale;
   double m_minx;
   double m_miny;

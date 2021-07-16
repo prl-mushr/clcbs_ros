@@ -5,9 +5,6 @@
 
     <node pkg="clcbs_ros" type="clcbs_node" name="clcbs_node" output="screen">
         <param name="w" value="$(arg w)"/>
-        <!--param name="maxTaskAssignments" value="$(arg a)"/-->
-        <!--param name="num_agent" value="$(arg num_agent)"/-->
         <param name="num_waypoint" value="$(arg num_waypoint)"/>
-        <param name="sim" value="true"/>
     </node>
 </launch>
