@@ -33,3 +33,6 @@
 
 # IDE-specific files
 .vscode/
+
+# Recorded bags
+bags/
