@@ -5,11 +5,11 @@ import tf
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Quaternion,PoseWithCovarianceStamped
 import time
 import math
-from mushr_coordination.msg import GoalPoseArray
+from clcbs_ros.msg import GoalPoseArray
 from std_msgs.msg import String
 
 
-testing_standalone = True  # set to false if testing the whole system as one unit. When testing as standalone, don't launch mushr_coordination
+testing_standalone = True  # set to false if testing the whole system as one unit. When testing as standalone, don't launch clcbs_node
 
 def angle_to_quaternion(angle):
     """Convert an angle in radians into a quaternion _message_."""
@@ -42,10 +42,10 @@ if __name__ == "__main__":
         target_pub.append(target)
 
     goal_pub = rospy.Publisher(
-        "/mushr_coordination/goals", GoalPoseArray, queue_size=5)
+        "/clcbs_ros/goals", GoalPoseArray, queue_size=5)
 
     obs_pub = rospy.Publisher(
-        "/mushr_coordination/obstacles", PoseArray, queue_size=5)
+        "/clcbs_ros/obstacles", PoseArray, queue_size=5)
     rospy.sleep(1)
 
     car_pose = [[0, 5, -math.pi/2], [3, 0, math.pi/2]]

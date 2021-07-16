@@ -23,13 +23,13 @@ public:
     : m_planning(false),
       m_ini_obs(false),
       m_ini_goal(false) {
-    nh.getParam("/mushr_coordination/num_waypoint", m_num_waypoint);
-    nh.getParam("/mushr_coordination/num_agent", m_num_agent);
+    nh.getParam("/clcbs_ros/num_waypoint", m_num_waypoint);
+    nh.getParam("/clcbs_ros/num_agent", m_num_agent);
     m_car_pose = std::vector<State>(m_num_agent);
     for (size_t i = 0; i < m_num_agent; ++i) {
       std::string name, color;
-      nh.getParam("/mushr_coordination/car" + std::to_string(i + 1) + "/name", name);
-      nh.getParam("/mushr_coordination/car" + std::to_string(i + 1) + "/color", color);
+      nh.getParam("/clcbs_ros/car" + std::to_string(i + 1) + "/name", name);
+      nh.getParam("/clcbs_ros/car" + std::to_string(i + 1) + "/color", color);
       std::cout << name << " " << color << std::endl;
       m_car_name.push_back(name);
       m_car_color.push_back(color);
@@ -39,25 +39,25 @@ public:
         boost::bind(&CLCBSNode::CarPoseCallback, this, _1, i)
       ));
       m_pub_plan.push_back(nh.advertise<geometry_msgs::PoseArray>(
-        name + "/waypoints", 
+        name + "/waypoints",
         10
       ));
       m_pub_marker.push_back(nh.advertise<visualization_msgs::Marker>(
-        name + "/marker", 
+        name + "/marker",
         10
       ));
     }
     m_pub_border = nh.advertise<visualization_msgs::Marker>(
-        "/mushr_coordination/border",
+        "/clcbs_ros/border",
         10
       );
-    m_sub_obs_pose = nh.subscribe("/mushr_coordination/obstacles", 
-            10, 
-            &CLCBSNode::ObsPoseCallback, 
+    m_sub_obs_pose = nh.subscribe("/clcbs_ros/obstacles",
+            10,
+            &CLCBSNode::ObsPoseCallback,
             this);
-    m_sub_goal = nh.subscribe("/mushr_coordination/goals", 
-            10, 
-            &CLCBSNode::GoalCallback, 
+    m_sub_goal = nh.subscribe("/clcbs_ros/goals",
+            10,
+            &CLCBSNode::GoalCallback,
             this);
     ros::Duration(1).sleep();
   }

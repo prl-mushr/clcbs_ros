@@ -1,10 +1,8 @@
 <launch>
-    <arg name="w" value = "1.3" />
     <arg name="num_waypoint" value = "2" /> <!-- number of waypoint that car have to visit for each task-->
     <rosparam file="$(find clcbs_ros)/config/4cars.yaml" command="load" ns="clcbs_ros" />
 
-    <node pkg="clcbs_ros" type="clcbs_node" name="clcbs_node" output="screen">
-        <param name="w" value="$(arg w)"/>
+    <node pkg="clcbs_ros" type="clcbs_node" name="clcbs_ros" output="screen">
         <param name="num_waypoint" value="$(arg num_waypoint)"/>
     </node>
 </launch>
