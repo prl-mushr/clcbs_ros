@@ -192,9 +192,14 @@ private:
                         
             double x = r_scalex(solution[j].states[i].first.x);
             double y = r_scaley(solution[j].states[i].first.y);
+
+            tf2::Quaternion quat;
+            quat.setRPY(0, 0, solution[j].states[i].first.yaw);
+
             p.position.x = x;
             p.position.y = y;
             p.position.z = time * 0.001;
+            p.orientation = tf2::toMsg(quat);
 
             plan.poses.push_back(p);
             time = 1;

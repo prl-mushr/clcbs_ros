@@ -9,7 +9,7 @@ from clcbs_ros.msg import GoalPoseArray
 from std_msgs.msg import String
 
 
-testing_standalone = True  # set to false if testing the whole system as one unit. When testing as standalone, don't launch clcbs_node
+testing_standalone = False  # set to false if testing the whole system as one unit. When testing as standalone, don't launch clcbs_node
 
 def angle_to_quaternion(angle):
     """Convert an angle in radians into a quaternion _message_."""
