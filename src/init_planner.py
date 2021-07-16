@@ -48,17 +48,8 @@ if __name__ == "__main__":
         "/mushr_coordination/obstacles", PoseArray, queue_size=5)
     rospy.sleep(1)
 
-    # test case - 1
     car_pose = [[0, 5, -math.pi/2], [3, 0, math.pi/2]]
-    goal_pose = [[ [1, 3], [1, 1] ], [[2, 2], [2, 4]]]
-
-    # test case - 2
-    # car_pose = [[0, 5, 0], [3, 5, math.pi]]
-    # goal_pose = [[ [1, 4], [2, 3] ], [[2, 4], [1, 2]]]
-
-    # # test case - 3
-    # car_pose = [[0, 5, 0], [3, 0, math.pi]]
-    # goal_pose = [[ [1.5, 3.5], [1.5, 1] ], [[1.5, 1], [1.5, 3.5]]]
+    goal_pose = [[[1, 3, -math.pi/2], [1, 1, math.pi]], [[2, 2, math.pi/2], [2, 4, 0]]]
 
     for i in range(count):
         now = rospy.Time.now()
@@ -101,6 +92,7 @@ if __name__ == "__main__":
             goal.position.x = goal_pose[i][j][0]
             goal.position.y = goal_pose[i][j][1]
             goal.position.z = 0.0
+            goal.orientation = angle_to_quaternion(goal_pose[i][j][2])
             goalmsg.goals[i].poses.append(goal)
     goal_pub.publish(goalmsg)
     if(testing_standalone):
