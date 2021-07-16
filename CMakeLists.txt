@@ -50,9 +50,9 @@ include_directories(include
   ${Boost_LIBRARIES}
 )
 
-add_executable(clcbs_ros src/clcbs_node.cpp include/clcbs_ros/clcbs_node.hpp)
-target_link_libraries(clcbs_ros ${catkin_LIBRARIES} ${OMPL_LIBRARIES})
-add_dependencies(clcbs_ros ${PROJECT_NAME}_generate_messages_cpp)
+add_executable(clcbs_node src/clcbs_node.cpp include/clcbs_ros/clcbs_node.hpp)
+target_link_libraries(clcbs_node ${catkin_LIBRARIES} ${OMPL_LIBRARIES})
+add_dependencies(clcbs_node ${PROJECT_NAME}_generate_messages_cpp)
 
 catkin_install_python(PROGRAMS 
   src/init_planner.py
@@ -64,7 +64,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING PATTERN "*.hpp"
 )
 
-install(TARGETS clcbs_ros
+install(TARGETS clcbs_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
