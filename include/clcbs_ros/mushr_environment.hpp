@@ -24,12 +24,13 @@ typedef boost::geometry::model::segment<Point> Segment;
 
 namespace Constants {
     
-static float wheelbase = 0.29f;
+static float L = 0.29f;
+static float speed_limit = 0.4f;
 static float steer_limit = 0.1 * M_PI;
 
 // [m] --- The minimum turning radius of the vehicle
-static float r = wheelbase / tanf(fabs(steer_limit));
-static float deltat = steer_limit * 6;
+static float r = L / tanf(fabs(steer_limit));
+static float deltat = speed_limit / r;
 // [#] --- A movement cost penalty for turning (choosing non straight motion
 // primitives)
 static float penaltyTurning = 1.5;
@@ -57,7 +58,7 @@ static float obsRadius = 1;
 // least time to wait for constraint
 static int constraintWaitTime = 2;
 
-// R = 3, steer_limit / 180 * M_PI DEG
+// R = 3, ~18 DEG
 std::vector<double> dyaw = {0, deltat, -deltat, 0, -deltat, deltat};
 std::vector<double> dx = {r * deltat, r *sin(deltat),  r *sin(deltat),
                           -r *deltat, -r *sin(deltat), -r *sin(deltat)};
