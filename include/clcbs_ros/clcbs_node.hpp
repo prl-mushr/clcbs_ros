@@ -114,7 +114,7 @@ private:
     for (auto& goal: m_goal_pose) {
       std::vector<State> ls;
       for (auto& waypoint: goal.points) {
-        ls.emplace_back(scalex(waypoint.x), scaley(waypoint.y), waypoint.yaw);
+        ls.emplace_back(scalex(waypoint.x), scaley(waypoint.y), -waypoint.yaw);
       }
       goals.emplace_back(ls);
     }
@@ -127,7 +127,7 @@ private:
     }
     // init start states
     for(auto& pos: m_car_pose) {
-      startStates.emplace_back(scalex(pos.x), scaley(pos.y), pos.yaw);
+      startStates.emplace_back(scalex(pos.x), scaley(pos.y), -pos.yaw);
     }
 
     int mkid = 0; //visualize
@@ -194,7 +194,7 @@ private:
             double y = r_scaley(solution[j].states[i].first.y);
 
             tf2::Quaternion quat;
-            quat.setRPY(0, 0, solution[j].states[i].first.yaw);
+            quat.setRPY(0, 0, -solution[j].states[i].first.yaw);
 
             p.position.x = x;
             p.position.y = y;
