@@ -48,8 +48,8 @@ if __name__ == "__main__":
         "/clcbs_ros/obstacles", PoseArray, queue_size=5)
     rospy.sleep(1)
 
-    car_pose = [[0, 5, -math.pi/2], [3, 0, math.pi/2]]
-    goal_pose = [[[1, 3, -math.pi/2], [1, 1, math.pi]], [[2, 2, math.pi/2], [2, 4, 0]]]
+    car_pose = [[0, 5, -math.pi/2], [0, 0, math.pi/2]]
+    goal_pose = [[[1, 3, -math.pi/2], [3, 3, math.pi]], [[2, 2, math.pi/2], [2, 4, 0]]]
 
     for i in range(count):
         now = rospy.Time.now()
