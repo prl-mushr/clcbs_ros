@@ -1,0 +1,19 @@
+L: 0.29
+speed_limit: 0.4
+steer_limit: 0.314 # 0.1 * pi
+
+# These parameters are not required, the clcbs node can calculate them based on the previous parameters
+# Specifying these parameters will override the calculated values
+# r: 0.893 # L / tan(abs(steer_limit)))
+# deltat: 0.448 # speed_limit / r
+
+penaltyTurning: 1.5
+penaltyReversing: 2.0
+penaltyCOD: 2.0
+mapResolution: 1.0
+
+carWidth: 0.25
+LF: 0.30
+LB: 0.05
+obsRadius: 1.0
+constraintWaitTime: 2

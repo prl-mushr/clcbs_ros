@@ -23,6 +23,8 @@ typedef boost::geometry::model::d2::point_xy<double> Point;
 typedef boost::geometry::model::segment<Point> Segment;
 
 namespace Constants {
+
+// default values of constants, can be overriden using car_params.yaml file
     
 static float L = 0.29f;
 static float speed_limit = 0.4f;
@@ -46,11 +48,10 @@ static float mapResolution = 1.0;
 static float xyResolution = r * deltat;
 static float yawResolution = deltat;
 
-// TODO Change to actual car measurements
 // width of car
-static float carWidth = 0.15f;
+static float carWidth = 0.25f;
 // distance from rear to vehicle front end
-static float LF = 0.35f;
+static float LF = 0.30f;
 // distance from rear to vehicle back end
 static float LB = 0.05f;
 // obstacle default radius
@@ -73,6 +74,7 @@ static inline float normalizeHeadingRad(float t) {
 
   return t - 2.f * M_PI * (int)(t / (2.f * M_PI));
 }
+
 }  // namespace Constants
 
 // calculate agent collision more precisely BUT need LONGER time

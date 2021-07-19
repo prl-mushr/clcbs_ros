@@ -26,6 +26,7 @@ public:
     nh.getParam("/clcbs_ros/num_waypoint", m_num_waypoint);
     nh.getParam("/clcbs_ros/num_agent", m_num_agent);
     m_car_pose = std::vector<State>(m_num_agent);
+    setCarParams(nh);
     for (size_t i = 0; i < m_num_agent; ++i) {
       std::string name, color;
       nh.getParam("/clcbs_ros/car" + std::to_string(i + 1) + "/name", name);
@@ -210,8 +211,8 @@ private:
           visualization_msgs::Marker drop;
           double marker_size = 0.25; 
           for (size_t i = 0; i < m_goal_pose.size(); i++) {
-            if (fabs(scalex(m_goal_pose[i][1].x) - solution[j].states.back().first.x) < 0.0001 &&
-                fabs(scaley(m_goal_pose[i][1].y) - solution[j].states.back().first.y) < 0.0001) {
+            if (fabs(scalex(m_goal_pose[i][1].x) - solution[j].states.back().first.x) < 0.001 &&
+                fabs(scaley(m_goal_pose[i][1].y) - solution[j].states.back().first.y) < 0.001) {
               create_marker(&pick, &mkid, m_goal_pose[i][0].x, m_goal_pose[i][0].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, 0);
               create_marker(&drop, &mkid, m_goal_pose[i][1].x, m_goal_pose[i][1].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, 1);
 
@@ -339,6 +340,62 @@ private:
     double r, p, y;
     tf2::Matrix3x3(quat.normalized()).getRPY(r, p, y);
     return y;
+  }
+
+  void setCarParams(ros::NodeHandle &nh) {
+    float L, speed_limit, steer_limit, r, deltat, penaltyTurning, penaltyReversing;
+    float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius;
+    int constraintWaitTime;
+
+    if (nh.getParam("/clcbs_ros/L", L)) {
+      Constants::L = L;
+    }
+    if (nh.getParam("/clcbs_ros/speed_limit", speed_limit)) {
+      Constants::speed_limit = speed_limit;
+    }
+    if (nh.getParam("/clcbs_ros/steer_limit", steer_limit)) {
+      Constants::steer_limit = steer_limit;
+    }
+    if (nh.getParam("/clcbs_ros/r", r)) {
+      Constants::r = r;
+    } else {
+      Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
+    }
+    if (nh.getParam("/clcbs_ros/deltat", deltat)) {
+      Constants::deltat = deltat;
+    } else {
+      Constants::deltat = Constants::speed_limit / Constants::r;
+    }
+    if (nh.getParam("/clcbs_ros/penaltyTurning", penaltyTurning)) {
+      Constants::penaltyTurning = penaltyTurning;
+    }
+    if (nh.getParam("/clcbs_ros/penaltyReversing", penaltyReversing)) {
+      Constants::penaltyReversing = penaltyReversing;
+    }
+    if (nh.getParam("/clcbs_ros/penaltyCOD", penaltyCOD)) {
+      Constants::penaltyCOD = penaltyCOD;
+    }
+    if (nh.getParam("/clcbs_ros/mapResolution", mapResolution)) {
+      Constants::mapResolution = mapResolution;
+    }
+    if (nh.getParam("/clcbs_ros/carWidth", carWidth)) {
+      Constants::carWidth = carWidth;
+    }
+    if (nh.getParam("/clcbs_ros/L", LF)) {
+      Constants::LF = LF;
+    }
+    if (nh.getParam("/clcbs_ros/L", LB)) {
+      Constants::LB = LB;
+    }
+    if (nh.getParam("/clcbs_ros/obsRadius", obsRadius)) {
+      Constants::obsRadius = obsRadius;
+    }
+    if (nh.getParam("/clcbs_ros/constraintWaitTime", constraintWaitTime)) {
+      Constants::constraintWaitTime = constraintWaitTime;
+    }
+
+    Constants::xyResolution = Constants::r * Constants::deltat;
+    Constants::yawResolution = Constants::deltat;
   }
 
   std::vector<ros::Subscriber> m_sub_car_pose;
