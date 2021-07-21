@@ -177,35 +177,30 @@ private:
 
     if (success) {
       for (size_t a = 0; a < m_num_agent; ++a) {
-        int prev_time = 0;
         geometry_msgs::PoseArray plan;
         plan.header.stamp = ros::Time::now();
         plan.header.frame_id = "map";
         for(int t = 0; t < startTime.size() - 1; t++) {
           int j = t * m_num_agent + a;
-          int time = 1;
+          double prev_time = 0.0;
           for (size_t i = 0; i < solution[j].states.size(); i++) {
             geometry_msgs::Pose p;
-            // visualize
-            if (solution[j].states[i].second == 0) {
-              time += startTime[t] - prev_time;
-            }
                         
             double x = r_scalex(solution[j].states[i].first.x);
             double y = r_scaley(solution[j].states[i].first.y);
+            double time = startTime[t] + solution[j].states[i].first.time;
 
             tf2::Quaternion quat;
             quat.setRPY(0, 0, -solution[j].states[i].first.yaw);
 
             p.position.x = x;
             p.position.y = y;
-            p.position.z = time * 0.001;
+            p.position.z = (time - prev_time) * (Constants::xyResolution / Constants::speed_limit) * 0.001;
             p.orientation = tf2::toMsg(quat);
 
             plan.poses.push_back(p);
-            time = 1;
+            prev_time = time;
           }
-          prev_time = solution[j].states.back().second + startTime[t] + 1;
           // visualize
           visualization_msgs::Marker pick;
           visualization_msgs::Marker drop;
