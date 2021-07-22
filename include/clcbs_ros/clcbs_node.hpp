@@ -92,7 +92,6 @@ private:
     m_miny = msg->miny;
     m_maxx = msg->maxx;
     m_maxy = msg->maxy;
-    setCarParams();
     for (auto &goal : msg->goals) {
       m_goal_pose.emplace_back();
       for (auto &pose : goal.poses) {
@@ -144,6 +143,9 @@ private:
 
     startTime.push_back(0);
     for (int i = 0; i < m_num_waypoint && success; i++) {
+      // set constraints for this waypoint
+      setCarParams(i);
+
       // get goals for current waypoint
       std::vector<State> cur_goals;
       for (auto& waypoints : goals) {
@@ -338,55 +340,59 @@ private:
     return y;
   }
 
-  void setCarParams() {
+  void setCarParams(int waypoint) {
     float L, speed_limit, steer_limit, r, deltat, penaltyTurning, penaltyReversing;
     float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius;
     int constraintWaitTime;
 
-    if (nh.getParam("/clcbs_ros/L", L)) {
+    std::string profile("default");
+    nh.getParam("/clcbs_ros/profile" + std::to_string(waypoint), profile);
+    std::string name = "/clcbs_ros/profiles/" + profile + "/";
+
+    if (nh.getParam(name + "L", L)) {
       Constants::L = L * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/speed_limit", speed_limit)) {
+    if (nh.getParam(name + "speed_limit", speed_limit)) {
       Constants::speed_limit = speed_limit * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/steer_limit", steer_limit)) {
+    if (nh.getParam(name + "steer_limit", steer_limit)) {
       Constants::steer_limit = steer_limit;
     }
-    if (nh.getParam("/clcbs_ros/r", r)) {
+    if (nh.getParam(name + "r", r)) {
       Constants::r = r * m_scale;
     } else {
       Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
     }
-    if (nh.getParam("/clcbs_ros/deltat", deltat)) {
+    if (nh.getParam(name + "deltat", deltat)) {
       Constants::deltat = deltat;
     } else {
       Constants::deltat = Constants::speed_limit / Constants::r;
     }
-    if (nh.getParam("/clcbs_ros/penaltyTurning", penaltyTurning)) {
+    if (nh.getParam(name + "penaltyTurning", penaltyTurning)) {
       Constants::penaltyTurning = penaltyTurning;
     }
-    if (nh.getParam("/clcbs_ros/penaltyReversing", penaltyReversing)) {
+    if (nh.getParam(name + "penaltyReversing", penaltyReversing)) {
       Constants::penaltyReversing = penaltyReversing;
     }
-    if (nh.getParam("/clcbs_ros/penaltyCOD", penaltyCOD)) {
+    if (nh.getParam(name + "penaltyCOD", penaltyCOD)) {
       Constants::penaltyCOD = penaltyCOD;
     }
-    if (nh.getParam("/clcbs_ros/mapResolution", mapResolution)) {
+    if (nh.getParam(name + "mapResolution", mapResolution)) {
       Constants::mapResolution = mapResolution;
     }
-    if (nh.getParam("/clcbs_ros/carWidth", carWidth)) {
+    if (nh.getParam(name + "carWidth", carWidth)) {
       Constants::carWidth = carWidth * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/LF", LF)) {
+    if (nh.getParam(name + "LF", LF)) {
       Constants::LF = LF * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/LB", LB)) {
+    if (nh.getParam(name + "LB", LB)) {
       Constants::LB = LB * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/obsRadius", obsRadius)) {
+    if (nh.getParam(name + "obsRadius", obsRadius)) {
       Constants::obsRadius = obsRadius * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/constraintWaitTime", constraintWaitTime)) {
+    if (nh.getParam(name + "constraintWaitTime", constraintWaitTime)) {
       Constants::constraintWaitTime = constraintWaitTime;
     }
 
