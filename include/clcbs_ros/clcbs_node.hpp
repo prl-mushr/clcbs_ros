@@ -19,14 +19,14 @@ using libMultiRobotPlanning::CL_CBS;
 
 class CLCBSNode {
 public:
-  CLCBSNode(ros::NodeHandle &nh)
-    : m_planning(false),
+  CLCBSNode(ros::NodeHandle &_nh)
+    : nh(_nh),
+      m_planning(false),
       m_ini_obs(false),
       m_ini_goal(false) {
     nh.getParam("/clcbs_ros/num_waypoint", m_num_waypoint);
     nh.getParam("/clcbs_ros/num_agent", m_num_agent);
     m_car_pose = std::vector<State>(m_num_agent);
-    setCarParams(nh);
     for (size_t i = 0; i < m_num_agent; ++i) {
       std::string name, color;
       nh.getParam("/clcbs_ros/car" + std::to_string(i + 1) + "/name", name);
@@ -92,6 +92,7 @@ private:
     m_miny = msg->miny;
     m_maxx = msg->maxx;
     m_maxy = msg->maxy;
+    setCarParams();
     for (auto &goal : msg->goals) {
       m_goal_pose.emplace_back();
       for (auto &pose : goal.poses) {
@@ -337,22 +338,22 @@ private:
     return y;
   }
 
-  void setCarParams(ros::NodeHandle &nh) {
+  void setCarParams() {
     float L, speed_limit, steer_limit, r, deltat, penaltyTurning, penaltyReversing;
     float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius;
     int constraintWaitTime;
 
     if (nh.getParam("/clcbs_ros/L", L)) {
-      Constants::L = L;
+      Constants::L = L * m_scale;
     }
     if (nh.getParam("/clcbs_ros/speed_limit", speed_limit)) {
-      Constants::speed_limit = speed_limit;
+      Constants::speed_limit = speed_limit * m_scale;
     }
     if (nh.getParam("/clcbs_ros/steer_limit", steer_limit)) {
       Constants::steer_limit = steer_limit;
     }
     if (nh.getParam("/clcbs_ros/r", r)) {
-      Constants::r = r;
+      Constants::r = r * m_scale;
     } else {
       Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
     }
@@ -374,16 +375,16 @@ private:
       Constants::mapResolution = mapResolution;
     }
     if (nh.getParam("/clcbs_ros/carWidth", carWidth)) {
-      Constants::carWidth = carWidth;
+      Constants::carWidth = carWidth * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/L", LF)) {
-      Constants::LF = LF;
+    if (nh.getParam("/clcbs_ros/LF", LF)) {
+      Constants::LF = LF * m_scale;
     }
-    if (nh.getParam("/clcbs_ros/L", LB)) {
-      Constants::LB = LB;
+    if (nh.getParam("/clcbs_ros/LB", LB)) {
+      Constants::LB = LB * m_scale;
     }
     if (nh.getParam("/clcbs_ros/obsRadius", obsRadius)) {
-      Constants::obsRadius = obsRadius;
+      Constants::obsRadius = obsRadius * m_scale;
     }
     if (nh.getParam("/clcbs_ros/constraintWaitTime", constraintWaitTime)) {
       Constants::constraintWaitTime = constraintWaitTime;
@@ -391,8 +392,15 @@ private:
 
     Constants::xyResolution = Constants::r * Constants::deltat;
     Constants::yawResolution = Constants::deltat;
+
+    Constants::dyaw = {0, Constants::deltat, -Constants::deltat, 0, -Constants::deltat, Constants::deltat};
+    Constants::dx = {Constants::r * Constants::deltat, Constants::r *sin(Constants::deltat),  Constants::r *sin(Constants::deltat),
+                              -Constants::r *Constants::deltat, -Constants::r *sin(Constants::deltat), -Constants::r *sin(Constants::deltat)};
+    Constants::dy = {0, -Constants::r *(1 - cos(Constants::deltat)), Constants::r *(1 - cos(Constants::deltat)),
+                              0, -Constants::r *(1 - cos(Constants::deltat)), Constants::r *(1 - cos(Constants::deltat))};
   }
 
+  ros::NodeHandle nh;
   std::vector<ros::Subscriber> m_sub_car_pose;
   ros::Subscriber m_sub_obs_pose;
   ros::Subscriber m_sub_goal;
