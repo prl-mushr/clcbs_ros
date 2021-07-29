@@ -486,15 +486,27 @@ class Environment {
   }
 
   int admissibleHeuristic(const State &s) {
+    double reedsSheppCost = 0, dubinsCost = 0;
     // non-holonomic-without-obstacles heuristic: use a Reeds-Shepp
-    ompl::base::ReedsSheppStateSpace reedsSheppPath(Constants::r);
-    OmplState *rsStart = (OmplState *)reedsSheppPath.allocState();
-    OmplState *rsEnd = (OmplState *)reedsSheppPath.allocState();
-    rsStart->setXY(s.x, s.y);
-    rsStart->setYaw(s.yaw);
-    rsEnd->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
-    rsEnd->setYaw(m_goals[m_agentIdx].yaw);
-    double reedsSheppCost = reedsSheppPath.distance(rsStart, rsEnd);
+    if (Constants::allow_reverse) {
+      ompl::base::ReedsSheppStateSpace reedsSheppPath(Constants::r);
+      OmplState *rsStart = (OmplState *)reedsSheppPath.allocState();
+      OmplState *rsEnd = (OmplState *)reedsSheppPath.allocState();
+      rsStart->setXY(s.x, s.y);
+      rsStart->setYaw(s.yaw);
+      rsEnd->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
+      rsEnd->setYaw(m_goals[m_agentIdx].yaw);
+      reedsSheppCost = reedsSheppPath.distance(rsStart, rsEnd);
+    } else {
+      ompl::base::DubinsStateSpace dubinsPath(Constants::r);
+      OmplState *dubinsStart = (OmplState *)dubinsPath.allocState();
+      OmplState *dubinsEnd = (OmplState *)dubinsPath.allocState();
+      dubinsStart->setXY(s.x, s.y);
+      dubinsStart->setYaw(s.yaw);
+      dubinsEnd->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
+      dubinsEnd->setYaw(m_goals[m_agentIdx].yaw);
+      dubinsCost = dubinsPath.distance(dubinsStart, dubinsEnd);
+    }
     // std::cout << "ReedsShepps cost:" << reedsSheppCost << std::endl;
     // Euclidean distance
     double euclideanCost = sqrt(pow(m_goals[m_agentIdx].x - s.x, 2) +
@@ -514,11 +526,18 @@ class Environment {
         twoDoffset;
     // std::cout << "holonomic cost:" << twoDCost << std::endl;
 
-    return std::max({reedsSheppCost, euclideanCost, twoDCost});
+    return std::max({reedsSheppCost, dubinsCost, euclideanCost, twoDCost});
     return 0;
   }
 
   bool isSolution(
+      const State &state, double gscore,
+      std::unordered_map<State, std::tuple<State, Action, double, double>,
+                         std::hash<State>> &_camefrom) {
+    return Constants::allow_reverse ? isSolutionWithReverse(state, gscore, _camefrom) : isSolutionWithoutReverse(state, gscore, _camefrom);
+  }
+
+  bool isSolutionWithReverse(
       const State &state, double gscore,
       std::unordered_map<State, std::tuple<State, Action, double, double>,
                          std::hash<State>> &_camefrom) {
@@ -580,6 +599,95 @@ class Environment {
       if (cost < 0) {
         cost = -cost * Constants::penaltyReversing;
         act = act + 3;
+      }
+      State s = path.back();
+      std::vector<std::pair<State, double>> next_path;
+      if (generatePath(s, act, deltat, dx, next_path)) {
+        for (auto iter = next_path.begin(); iter != next_path.end(); iter++) {
+          State next_s = iter->first;
+          gscore += iter->second;
+          if (!(next_s == path.back())) {
+            cameFrom.insert(std::make_pair<>(
+                next_s,
+                std::make_tuple<>(path.back(), act, iter->second, gscore)));
+          }
+          path.emplace_back(next_s);
+        }
+      } else {
+        return false;
+      }
+    }
+
+    if (path.back().time <= m_lastGoalConstraint) {
+      return false;
+    }
+
+    m_goals[m_agentIdx] = path.back();
+
+    _camefrom.insert(cameFrom.begin(), cameFrom.end());
+    return true;
+  }
+
+  bool isSolutionWithoutReverse(
+      const State &state, double gscore,
+      std::unordered_map<State, std::tuple<State, Action, double, double>,
+                         std::hash<State>> &_camefrom) {
+    double goal_distance =
+        sqrt(pow(state.x - getGoal().x, 2) + pow(state.y - getGoal().y, 2));
+    if (goal_distance > 3 * (Constants::LB + Constants::LF)) return false;
+    ompl::base::DubinsStateSpace dubinsSpace(Constants::r);
+    // ompl::base::RealVectorBounds bounds(2);
+    // bounds.setLow(0);
+    // bounds.setHigh(0, m_dimx * Constants::mapResolution);
+    // bounds.setHigh(1, m_dimy * Constants::mapResolution);
+    // dubinsSpace.setBounds(bounds);
+    OmplState *dubinsStart = (OmplState *)dubinsSpace.allocState();
+    OmplState *dubinsEnd = (OmplState *)dubinsSpace.allocState();
+    dubinsStart->setXY(state.x, state.y);
+    dubinsStart->setYaw(-state.yaw);
+    dubinsEnd->setXY(getGoal().x, getGoal().y);
+    dubinsEnd->setYaw(-getGoal().yaw);
+    ompl::base::DubinsStateSpace::DubinsPath dubinsPath =
+        dubinsSpace.dubins(dubinsStart, dubinsEnd);
+
+    std::vector<State> path;
+    std::unordered_map<State, std::tuple<State, Action, double, double>,
+                       std::hash<State>>
+        cameFrom;
+    cameFrom.clear();
+    path.emplace_back(state);
+    for (auto pathidx = 0; pathidx < 3; pathidx++) {
+      if (fabs(dubinsPath.length_[pathidx]) < 1e-6) continue;
+      double deltat = 0, dx = 0, act = 0, cost = 0;
+      switch (dubinsPath.type_[pathidx]) {
+        case 0:  // DUBINS_LEFT
+          deltat = -dubinsPath.length_[pathidx];
+          dx = Constants::r * sin(-deltat);
+          // dy = Constants::r * (1 - cos(-deltat));
+          act = 2;
+          cost = dubinsPath.length_[pathidx] * Constants::r *
+                 Constants::penaltyTurning;
+          break;
+        case 1:  // DUBINS_STRAIGHT
+          deltat = 0;
+          dx = dubinsPath.length_[pathidx] * Constants::r;
+          // dy = 0;
+          act = 0;
+          cost = dx;
+          break;
+        case 2:  // DUBINS_RIGHT
+          deltat = dubinsPath.length_[pathidx];
+          dx = Constants::r * sin(deltat);
+          // dy = -Constants::r * (1 - cos(deltat));
+          act = 1;
+          cost = dubinsPath.length_[pathidx] * Constants::r *
+                 Constants::penaltyTurning;
+          break;
+        default:
+          std::cout << "\033[1m\033[31m"
+                    << "Warning: Receive unknown DubinsPath type"
+                    << "\033[0m\n";
+          break;
       }
       State s = path.back();
       std::vector<std::pair<State, double>> next_path;
