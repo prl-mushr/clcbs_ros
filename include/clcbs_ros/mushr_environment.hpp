@@ -25,7 +25,9 @@ typedef boost::geometry::model::segment<Point> Segment;
 namespace Constants {
 
 // default values of constants, can be overriden using car_params.yaml file
-    
+
+static bool allow_reverse = true;
+
 static float L = 0.29f;
 static float speed_limit = 0.4f;
 static float steer_limit = 0.1 * M_PI;
@@ -611,7 +613,7 @@ class Environment {
                     std::vector<Neighbor<State, Action, double>> &neighbors) {
     neighbors.clear();
     double g = Constants::dx[0];
-    for (Action act = 0; act < 6; act++) {  // has 6 directions for Reeds-Shepp
+    for (Action act = 0; act < (Constants::allow_reverse ? 6 : 3); act++) {  // has 6 directions for Reeds-Shepp, 3 for Dubins
       double xSucc, ySucc, yawSucc;
       g = Constants::dx[0];
       xSucc = s.x + Constants::dx[act] * cos(-s.yaw) -

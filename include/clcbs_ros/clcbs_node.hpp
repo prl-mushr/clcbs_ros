@@ -344,11 +344,15 @@ private:
     float L, speed_limit, steer_limit, r, deltat, penaltyTurning, penaltyReversing;
     float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius;
     int constraintWaitTime;
+    bool allow_reverse;
 
     std::string profile("default");
     nh.getParam("/clcbs_ros/profile" + std::to_string(waypoint), profile);
     std::string name = "/clcbs_ros/profiles/" + profile + "/";
 
+    if (nh.getParam(name + "allow_reverse", allow_reverse)) {
+      Constants::allow_reverse = allow_reverse;
+    }
     if (nh.getParam(name + "L", L)) {
       Constants::L = L * m_scale;
     }
