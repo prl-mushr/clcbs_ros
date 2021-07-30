@@ -133,8 +133,8 @@ private:
 
     int mkid = 0; //visualize
 
-    int dimx = scalex(m_maxx) + 1;
-    int dimy = scaley(m_maxy) + 1;
+    int dimx = scalex(m_maxx) + m_scale;
+    int dimy = scaley(m_maxy) + m_scale;
     bool success = true;
     std::vector<int> startTime;
     std::multimap<int, State> dynamic_obstacles;
@@ -147,26 +147,46 @@ private:
       setCarParams(i);
 
       // get goals for current waypoint
+      std::vector<State> mid_goals;
       std::vector<State> cur_goals;
       for (auto& waypoints : goals) {
+        mid_goals.emplace_back(waypoints[i].x - m_scale * 0.5 * std::cos(-waypoints[i].yaw), waypoints[i].y - m_scale * 0.5 * std::sin(-waypoints[i].yaw), waypoints[i].yaw);
         cur_goals.emplace_back(waypoints[i]);
       }
+
+      std::unordered_set<Location> mid_obstacles(obstacles);
+      std::multimap<int, State> mid_dynamic_obstacles(dynamic_obstacles);
+
+      Environment mid_mapf(dimx, dimy, mid_obstacles, mid_dynamic_obstacles, mid_goals);
+      CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
+          mid_cbs(mid_mapf);
 
       Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, cur_goals);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           cbs(mapf);
       
+      std::vector<PlanResult<State, Action, Cost>> mid_solution;
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
-      success &= cbs.search(startStates, sub_solution);
+      success &= mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution);
       startStates.clear();
-      int ct = 0;
+      int mid_makespan = 0;
+      for (const auto& s : mid_solution) {
+        mid_makespan = std::max<int64_t>(mid_makespan, s.cost);
+      }
       int sub_makespan = 0;
       for (const auto& s : sub_solution) {
         State last = s.states.back().first;
         startStates.emplace_back(State(last.x, last.y, last.yaw));
         sub_makespan = std::max<int64_t>(sub_makespan, s.cost);
       }
+      sub_makespan += mid_makespan;
       startTime.push_back(sub_makespan);
+      for (int i = 0; i < mid_solution.size(); i++) {
+        sub_solution[i].states.insert(sub_solution[i].states.begin(), mid_solution[i].states.begin(), mid_solution[i].states.end());
+        sub_solution[i].actions.insert(sub_solution[i].actions.begin(), mid_solution[i].actions.begin(), mid_solution[i].actions.end());
+        sub_solution[i].cost += mid_solution[i].cost;
+        sub_solution[i].fmin += mid_solution[i].fmin;
+      }
       solution.insert(solution.end(), sub_solution.begin(), sub_solution.end());
     }
 
