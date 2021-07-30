@@ -49,7 +49,10 @@ if __name__ == "__main__":
     rospy.sleep(1)
 
     car_pose = [[0, 5, -math.pi/2], [0, 0, math.pi/2]]
-    goal_pose = [[[1, 3, -math.pi/2], [3, 3, math.pi]], [[2, 2, math.pi/2], [2, 4, 0]]]
+    goal_pose = [[[1, 3, -math.pi/2], [3, 3, math.pi]], [[1, 2, math.pi/2], [2, 4, 0]]]
+    
+    # car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2]]
+    # goal_pose = [[[1, 5, math.pi/2], [0, 0, math.pi/2]], [[2, 5, math.pi/2], [3, 0, math.pi/2]]]
 
     for i in range(count):
         now = rospy.Time.now()
