@@ -80,7 +80,7 @@ static inline float normalizeHeadingRad(float t) {
 }  // namespace Constants
 
 // calculate agent collision more precisely BUT need LONGER time
-// #define PRECISE_COLLISION
+#define PRECISE_COLLISION
 
 namespace clcbs_ros {
 
