@@ -133,8 +133,8 @@ private:
 
     int mkid = 0; //visualize
 
-    int dimx = scalex(m_maxx) + m_scale;
-    int dimy = scaley(m_maxy) + m_scale;
+    int dimx = std::ceil(scalex(m_maxx));
+    int dimy = std::ceil(scaley(m_maxy));
     bool success = true;
     std::vector<int> startTime;
     std::multimap<int, State> dynamic_obstacles;
@@ -150,7 +150,7 @@ private:
       std::vector<State> mid_goals;
       std::vector<State> cur_goals;
       for (auto& waypoints : goals) {
-        mid_goals.emplace_back(waypoints[i].x - m_scale * 0.5 * std::cos(-waypoints[i].yaw), waypoints[i].y - m_scale * 0.5 * std::sin(-waypoints[i].yaw), waypoints[i].yaw);
+        mid_goals.emplace_back(waypoints[i].x - scalex(0.5 * std::cos(-waypoints[i].yaw)), waypoints[i].y - scaley(0.5 * std::sin(-waypoints[i].yaw)), waypoints[i].yaw);
         cur_goals.emplace_back(waypoints[i]);
       }
 
@@ -337,11 +337,23 @@ private:
   }
 
   double scalex(double x) {
-    return floor((x - m_minx) * m_scale);
+    if (std::abs(x) < 0.01) {
+      x = 0;
+    }
+    if (std::abs(x - m_maxx) < 0.01) {
+      x -= 0.01;
+    }
+    return (x - m_minx) * m_scale;
   }
 
   double scaley(double y) {
-    return floor((y - m_miny) * m_scale);
+    if (std::abs(y) < 0.01) {
+      y = 0;
+    }
+    if (std::abs(y - m_maxy) < 0.01) {
+      y -= 0.01;
+    }
+    return (y - m_miny) * m_scale;
   }
 
   double r_scalex(double x) {
