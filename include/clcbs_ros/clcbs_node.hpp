@@ -115,7 +115,7 @@ private:
     for (auto& goal: m_goal_pose) {
       std::vector<State> ls;
       for (auto& waypoint: goal.points) {
-        ls.emplace_back(scalex(waypoint.x), scaley(waypoint.y), -waypoint.yaw);
+        ls.emplace_back(waypoint.x, waypoint.y, waypoint.yaw);
       }
       goals.emplace_back(ls);
     }
@@ -150,8 +150,8 @@ private:
       std::vector<State> mid_goals;
       std::vector<State> cur_goals;
       for (auto& waypoints : goals) {
-        mid_goals.emplace_back(waypoints[i].x - scalex(0.5 * std::cos(-waypoints[i].yaw)), waypoints[i].y - scaley(0.5 * std::sin(-waypoints[i].yaw)), waypoints[i].yaw);
-        cur_goals.emplace_back(waypoints[i]);
+        mid_goals.emplace_back(scalex(waypoints[i].x - 0.5 * std::cos(waypoints[i].yaw)), scaley(waypoints[i].y - 0.5 * std::sin(waypoints[i].yaw)), -waypoints[i].yaw);
+        cur_goals.emplace_back(scalex(waypoints[i].x), scaley(waypoints[i].y), -waypoints[i].yaw);
       }
 
       std::unordered_set<Location> mid_obstacles(obstacles);
@@ -337,23 +337,25 @@ private:
   }
 
   double scalex(double x) {
+    x = (x - m_minx) * m_scale;
+    // Round close to 0 numbers to 0 (keeps points within boundaries)
     if (std::abs(x) < 0.01) {
       x = 0;
-    }
-    if (std::abs(x - m_maxx) < 0.01) {
+    } else if (std::abs(x - ((m_maxx - m_minx) * m_scale)) < 0.01) {
+      // Hacky fix for segfaults in mushr_environment functions
       x -= 0.01;
     }
-    return (x - m_minx) * m_scale;
+    return x;
   }
 
   double scaley(double y) {
+    y = (y - m_miny) * m_scale;
     if (std::abs(y) < 0.01) {
       y = 0;
-    }
-    if (std::abs(y - m_maxy) < 0.01) {
+    } else if (std::abs(y - ((m_maxy - m_miny) * m_scale)) < 0.01) {
       y -= 0.01;
     }
-    return (y - m_miny) * m_scale;
+    return y;
   }
 
   double r_scalex(double x) {

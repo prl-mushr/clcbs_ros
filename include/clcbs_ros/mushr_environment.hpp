@@ -286,7 +286,6 @@ struct hash<Constraint> {
 
 namespace clcbs_ros {
 
-// FIXME: modify data struct, it's not the best option
 struct Constraints {
   std::unordered_set<Constraint> constraints;
 
