@@ -48,8 +48,11 @@ if __name__ == "__main__":
         "/clcbs_ros/obstacles", PoseArray, queue_size=5)
     rospy.sleep(1)
 
+    # Goal poses should have at least 0.5m free space behind them so the planner doesn't fail
+    # If pushing a block or about to push, at least 0.5m + (pushing LF + default value of LF) / 2
+
     # car_pose = [[0, 5, -math.pi/2], [0, 0, math.pi/2]]
-    # goal_pose = [[[1, 3, -math.pi/2], [3, 3, math.pi]], [[1, 2, math.pi/2], [2, 4, 0]]]
+    # goal_pose = [[[1, 3, -math.pi/2], [2.5, 3, math.pi]], [[1, 2, math.pi/2], [2, 4, 0]]]
     
     car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2]]
     goal_pose = [[[1, 5, math.pi/2], [0, 0.5, math.pi/2]], [[2, 5, math.pi/2], [3, 0.5, math.pi/2]]]
