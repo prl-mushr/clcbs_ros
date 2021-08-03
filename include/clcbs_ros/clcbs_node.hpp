@@ -247,22 +247,16 @@ private:
             plan.poses.push_back(p);
             prev_time = time;
           }
-          // visualize
-          visualization_msgs::Marker pick;
-          visualization_msgs::Marker drop;
-          double marker_size = 0.25; 
-          for (size_t i = 0; i < m_goal_pose.size(); i++) {
-            if (fabs(scalex(m_goal_pose[i][1].x) - solution[j].states.back().first.x) < 0.001 &&
-                fabs(scaley(m_goal_pose[i][1].y) - solution[j].states.back().first.y) < 0.001) {
-              create_marker(&pick, &mkid, m_goal_pose[i][0].x, m_goal_pose[i][0].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, 0);
-              create_marker(&drop, &mkid, m_goal_pose[i][1].x, m_goal_pose[i][1].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, 1);
-
-              m_pub_marker[a].publish(pick);
-              m_pub_marker[a].publish(drop);
-              break;
-            }
-          } 
         }
+
+        // publish waypoint markers
+        double marker_size = 0.25;
+        for (int i = 0; i < m_num_waypoint; i++) {
+          visualization_msgs::Marker marker;
+          create_marker(&marker, &mkid, m_goal_pose[a][i].x, m_goal_pose[a][i].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, i);
+          m_pub_marker[a].publish(marker);
+        }
+
         m_pub_plan[a].publish(plan);
         plan.poses.clear();
         std::cout << "publish plan for car " << a + 1 << std::endl;
