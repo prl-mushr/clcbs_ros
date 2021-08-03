@@ -387,8 +387,8 @@ class Environment {
   Environment(int maxx, int maxy, std::unordered_set<Location> obstacles,
               std::multimap<int, State> dynamic_obstacles,
               std::vector<State> goals)
-      : m_obstacles(std::move(obstacles)),
-        m_dynamic_obstacles(std::move(dynamic_obstacles)),
+      : m_obstacles(obstacles),
+        m_dynamic_obstacles(dynamic_obstacles),
         m_agentIdx(0),
         m_constraints(nullptr),
         m_lastGoalConstraint(-1),

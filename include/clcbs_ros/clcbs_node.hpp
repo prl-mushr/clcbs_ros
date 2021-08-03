@@ -155,7 +155,6 @@ private:
       nh.getParam("/clcbs_ros/profile" + std::to_string(i + 1), next_profile);
 
       if (profile == "pushing" || next_profile == "pushing") {
-        std::cout <<"pushing" <<std::endl;
         double LF, default_LF;
         nh.getParam("/clcbs_ros/profiles/pushing/LF", LF);
         nh.getParam("/clcbs_ros/profiles/default/LF", default_LF);
@@ -177,10 +176,7 @@ private:
         cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
       }
 
-      std::unordered_set<Location> mid_obstacles(obstacles);
-      std::multimap<int, State> mid_dynamic_obstacles(dynamic_obstacles);
-
-      Environment mid_mapf(dimx, dimy, mid_obstacles, mid_dynamic_obstacles, mid_goals);
+      Environment mid_mapf(dimx, dimy, obstacles, dynamic_obstacles, mid_goals);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           mid_cbs(mid_mapf);
 
@@ -192,6 +188,13 @@ private:
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
       success &= mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution);
       startStates.clear();
+
+      if (profile == "pushing") {
+        for (auto& waypoints : goals) {
+          obstacles.emplace(scalex(waypoints[i].x), scaley(waypoints[i].y));
+        }
+      }
+
       int mid_makespan = 0;
       for (const auto& s : mid_solution) {
         mid_makespan = std::max<int64_t>(mid_makespan, s.cost);
@@ -204,6 +207,7 @@ private:
       }
       sub_makespan += mid_makespan;
       startTime.push_back(sub_makespan);
+
       for (int i = 0; i < mid_solution.size(); i++) {
         sub_solution[i].states.insert(sub_solution[i].states.begin(), mid_solution[i].states.begin(), mid_solution[i].states.end());
         sub_solution[i].actions.insert(sub_solution[i].actions.begin(), mid_solution[i].actions.begin(), mid_solution[i].actions.end());
