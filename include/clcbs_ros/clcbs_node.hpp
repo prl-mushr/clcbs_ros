@@ -146,12 +146,35 @@ private:
       // set constraints for this waypoint
       setCarParams(i);
 
+      // set offset if pushing
+      double offset = 0;
+
+      std::string profile("default");
+      std::string next_profile("default");
+      nh.getParam("/clcbs_ros/profile" + std::to_string(i), profile);
+      nh.getParam("/clcbs_ros/profile" + std::to_string(i + 1), next_profile);
+
+      if (profile == "pushing" || next_profile == "pushing") {
+        std::cout <<"pushing" <<std::endl;
+        double LF, default_LF;
+        nh.getParam("/clcbs_ros/profiles/pushing/LF", LF);
+        nh.getParam("/clcbs_ros/profiles/default/LF", default_LF);
+        offset = default_LF + (LF - default_LF) / 2;
+      }
+
       // get goals for current waypoint
       std::vector<State> mid_goals;
       std::vector<State> cur_goals;
       for (auto& waypoints : goals) {
-        mid_goals.emplace_back(scalex(waypoints[i].x - 0.5 * std::cos(waypoints[i].yaw)), scaley(waypoints[i].y - 0.5 * std::sin(waypoints[i].yaw)), -waypoints[i].yaw);
-        cur_goals.emplace_back(scalex(waypoints[i].x), scaley(waypoints[i].y), -waypoints[i].yaw);
+        double x = waypoints[i].x;
+        double y = waypoints[i].y;
+        double yaw = waypoints[i].yaw;
+
+        x -= offset * std::cos(yaw);
+        y -= offset * std::sin(yaw);
+
+        mid_goals.emplace_back(scalex(x - 0.5 * std::cos(yaw)), scaley(y - 0.5 * std::sin(yaw)), -yaw);
+        cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
       }
 
       std::unordered_set<Location> mid_obstacles(obstacles);
