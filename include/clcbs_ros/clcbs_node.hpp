@@ -361,7 +361,7 @@ private:
     x = (x - m_minx) * m_scale;
     // Round close to 0 numbers to 0 (keeps points within boundaries)
     if (std::abs(x) < 0.01) {
-      x = 0;
+      x = 0.01;
     } else if (std::abs(x - ((m_maxx - m_minx) * m_scale)) < 0.01) {
       // Hacky fix for segfaults in mushr_environment functions
       x -= 0.01;
@@ -372,7 +372,7 @@ private:
   double scaley(double y) {
     y = (y - m_miny) * m_scale;
     if (std::abs(y) < 0.01) {
-      y = 0;
+      y = 0.01;
     } else if (std::abs(y - ((m_maxy - m_miny) * m_scale)) < 0.01) {
       y -= 0.01;
     }
