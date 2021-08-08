@@ -486,26 +486,18 @@ class Environment {
 
   int admissibleHeuristic(const State &s) {
     double reedsSheppCost = 0, dubinsCost = 0;
-    // non-holonomic-without-obstacles heuristic: use a Reeds-Shepp
-    if (Constants::allow_reverse) {
-      ompl::base::ReedsSheppStateSpace reedsSheppPath(Constants::r);
-      OmplState *rsStart = (OmplState *)reedsSheppPath.allocState();
-      OmplState *rsEnd = (OmplState *)reedsSheppPath.allocState();
-      rsStart->setXY(s.x, s.y);
-      rsStart->setYaw(s.yaw);
-      rsEnd->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
-      rsEnd->setYaw(m_goals[m_agentIdx].yaw);
-      reedsSheppCost = reedsSheppPath.distance(rsStart, rsEnd);
-    } else {
-      ompl::base::DubinsStateSpace dubinsPath(Constants::r);
-      OmplState *dubinsStart = (OmplState *)dubinsPath.allocState();
-      OmplState *dubinsEnd = (OmplState *)dubinsPath.allocState();
-      dubinsStart->setXY(s.x, s.y);
-      dubinsStart->setYaw(s.yaw);
-      dubinsEnd->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
-      dubinsEnd->setYaw(m_goals[m_agentIdx].yaw);
-      dubinsCost = dubinsPath.distance(dubinsStart, dubinsEnd);
-    }
+    // non-holonomic-without-obstacles heuristic: use a Reeds-Shepp (or Dubins if reversing not allowed)
+    std::unique_ptr<ompl::base::SE2StateSpace> path(
+        Constants::allow_reverse ? (ompl::base::SE2StateSpace *)(new ompl::base::ReedsSheppStateSpace(Constants::r))
+                                 : (ompl::base::SE2StateSpace *)(new ompl::base::DubinsStateSpace(Constants::r))
+    );
+    OmplState *start = (OmplState *)path->allocState();
+    OmplState *end = (OmplState *)path->allocState();
+    start->setXY(s.x, s.y);
+    start->setYaw(s.yaw);
+    end->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
+    end->setYaw(m_goals[m_agentIdx].yaw);
+    reedsSheppCost = path->distance(start, end);
     // std::cout << "ReedsShepps cost:" << reedsSheppCost << std::endl;
     // Euclidean distance
     double euclideanCost = sqrt(pow(m_goals[m_agentIdx].x - s.x, 2) +
@@ -635,11 +627,6 @@ class Environment {
         sqrt(pow(state.x - getGoal().x, 2) + pow(state.y - getGoal().y, 2));
     if (goal_distance > 3 * (Constants::LB + Constants::LF)) return false;
     ompl::base::DubinsStateSpace dubinsSpace(Constants::r);
-    // ompl::base::RealVectorBounds bounds(2);
-    // bounds.setLow(0);
-    // bounds.setHigh(0, m_dimx * Constants::mapResolution);
-    // bounds.setHigh(1, m_dimy * Constants::mapResolution);
-    // dubinsSpace.setBounds(bounds);
     OmplState *dubinsStart = (OmplState *)dubinsSpace.allocState();
     OmplState *dubinsEnd = (OmplState *)dubinsSpace.allocState();
     dubinsStart->setXY(state.x, state.y);
