@@ -9,13 +9,13 @@ profiles: # definitions for constraint profiles
     # r: 0.893 # L / tan(abs(steer_limit)))
     # deltat: 0.448 # speed_limit / r
     penaltyTurning: 1.5
-    penaltyReversing: 2.0
+    penaltyReversing: 1.0
     penaltyCOD: 2.0
-    mapResolution: 1.0
+    mapResolution: 0.1
     carWidth: 0.25
     LF: 0.30
     LB: 0.05
-    obsRadius: 1.0
+    obsRadius: 0.1
     constraintWaitTime: 2
   pushing:
     allow_reverse: False
@@ -27,11 +27,11 @@ profiles: # definitions for constraint profiles
     penaltyTurning: 1.5
     penaltyReversing: 2.0
     penaltyCOD: 2.0
-    mapResolution: 1.0
+    mapResolution: 0.1
     carWidth: 0.25
-    LF: 0.50
+    LF: 0.50 # includes length of block being pushed
     LB: 0.05
-    obsRadius: 1.0
+    obsRadius: 0.1
     constraintWaitTime: 2
 
 # which profile to use when navigating to each waypoint (0 indexed)

@@ -115,7 +115,7 @@ private:
     for (auto& goal: m_goal_pose) {
       std::vector<State> ls;
       for (auto& waypoint: goal.points) {
-        ls.emplace_back(scalex(waypoint.x), scaley(waypoint.y), -waypoint.yaw);
+        ls.emplace_back(waypoint.x, waypoint.y, waypoint.yaw);
       }
       goals.emplace_back(ls);
     }
@@ -133,8 +133,8 @@ private:
 
     int mkid = 0; //visualize
 
-    int dimx = scalex(m_maxx) + 1;
-    int dimy = scaley(m_maxy) + 1;
+    int dimx = std::ceil(scalex(m_maxx));
+    int dimy = std::ceil(scaley(m_maxy));
     bool success = true;
     std::vector<int> startTime;
     std::multimap<int, State> dynamic_obstacles;
@@ -146,27 +146,74 @@ private:
       // set constraints for this waypoint
       setCarParams(i);
 
+      // set offset if pushing
+      double offset = 0;
+
+      std::string profile("default");
+      std::string next_profile("default");
+      nh.getParam("/clcbs_ros/profile" + std::to_string(i), profile);
+      nh.getParam("/clcbs_ros/profile" + std::to_string(i + 1), next_profile);
+
+      if (profile == "pushing" || next_profile == "pushing") {
+        double LF, default_LF;
+        nh.getParam("/clcbs_ros/profiles/pushing/LF", LF);
+        nh.getParam("/clcbs_ros/profiles/default/LF", default_LF);
+        offset = default_LF + (LF - default_LF) / 2;
+      }
+
       // get goals for current waypoint
+      std::vector<State> mid_goals;
       std::vector<State> cur_goals;
       for (auto& waypoints : goals) {
-        cur_goals.emplace_back(waypoints[i]);
+        double x = waypoints[i].x;
+        double y = waypoints[i].y;
+        double yaw = waypoints[i].yaw;
+
+        x -= offset * std::cos(yaw);
+        y -= offset * std::sin(yaw);
+
+        mid_goals.emplace_back(scalex(x - 0.5 * std::cos(yaw)), scaley(y - 0.5 * std::sin(yaw)), -yaw);
+        cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
       }
+
+      Environment mid_mapf(dimx, dimy, obstacles, dynamic_obstacles, mid_goals);
+      CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
+          mid_cbs(mid_mapf);
 
       Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, cur_goals);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           cbs(mapf);
       
+      std::vector<PlanResult<State, Action, Cost>> mid_solution;
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
-      success &= cbs.search(startStates, sub_solution);
+      success &= mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution);
       startStates.clear();
-      int ct = 0;
+
+      if (profile == "pushing") {
+        for (auto& waypoints : goals) {
+          obstacles.emplace(scalex(waypoints[i].x), scaley(waypoints[i].y));
+        }
+      }
+
+      int mid_makespan = 0;
+      for (const auto& s : mid_solution) {
+        mid_makespan = std::max<int64_t>(mid_makespan, s.cost);
+      }
       int sub_makespan = 0;
       for (const auto& s : sub_solution) {
         State last = s.states.back().first;
         startStates.emplace_back(State(last.x, last.y, last.yaw));
         sub_makespan = std::max<int64_t>(sub_makespan, s.cost);
       }
+      sub_makespan += mid_makespan;
       startTime.push_back(sub_makespan);
+
+      for (int i = 0; i < mid_solution.size(); i++) {
+        sub_solution[i].states.insert(sub_solution[i].states.begin(), mid_solution[i].states.begin(), mid_solution[i].states.end());
+        sub_solution[i].actions.insert(sub_solution[i].actions.begin(), mid_solution[i].actions.begin(), mid_solution[i].actions.end());
+        sub_solution[i].cost += mid_solution[i].cost;
+        sub_solution[i].fmin += mid_solution[i].fmin;
+      }
       solution.insert(solution.end(), sub_solution.begin(), sub_solution.end());
     }
 
@@ -204,22 +251,16 @@ private:
             plan.poses.push_back(p);
             prev_time = time;
           }
-          // visualize
-          visualization_msgs::Marker pick;
-          visualization_msgs::Marker drop;
-          double marker_size = 0.25; 
-          for (size_t i = 0; i < m_goal_pose.size(); i++) {
-            if (fabs(scalex(m_goal_pose[i][1].x) - solution[j].states.back().first.x) < 0.001 &&
-                fabs(scaley(m_goal_pose[i][1].y) - solution[j].states.back().first.y) < 0.001) {
-              create_marker(&pick, &mkid, m_goal_pose[i][0].x, m_goal_pose[i][0].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, 0);
-              create_marker(&drop, &mkid, m_goal_pose[i][1].x, m_goal_pose[i][1].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, 1);
-
-              m_pub_marker[a].publish(pick);
-              m_pub_marker[a].publish(drop);
-              break;
-            }
-          } 
         }
+
+        // publish waypoint markers
+        double marker_size = 0.25;
+        for (int i = 0; i < m_num_waypoint; i++) {
+          visualization_msgs::Marker marker;
+          create_marker(&marker, &mkid, m_goal_pose[a][i].x, m_goal_pose[a][i].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, i);
+          m_pub_marker[a].publish(marker);
+        }
+
         m_pub_plan[a].publish(plan);
         plan.poses.clear();
         std::cout << "publish plan for car " << a + 1 << std::endl;
@@ -317,11 +358,25 @@ private:
   }
 
   double scalex(double x) {
-    return floor((x - m_minx) * m_scale);
+    x = (x - m_minx) * m_scale;
+    // Round close to 0 numbers to 0 (keeps points within boundaries)
+    if (std::abs(x) < 0.01) {
+      x = 0.01;
+    } else if (std::abs(x - ((m_maxx - m_minx) * m_scale)) < 0.01) {
+      // Hacky fix for segfaults in mushr_environment functions
+      x -= 0.01;
+    }
+    return x;
   }
 
   double scaley(double y) {
-    return floor((y - m_miny) * m_scale);
+    y = (y - m_miny) * m_scale;
+    if (std::abs(y) < 0.01) {
+      y = 0.01;
+    } else if (std::abs(y - ((m_maxy - m_miny) * m_scale)) < 0.01) {
+      y -= 0.01;
+    }
+    return y;
   }
 
   double r_scalex(double x) {

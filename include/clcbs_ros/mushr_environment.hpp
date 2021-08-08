@@ -80,7 +80,7 @@ static inline float normalizeHeadingRad(float t) {
 }  // namespace Constants
 
 // calculate agent collision more precisely BUT need LONGER time
-// #define PRECISE_COLLISION
+#define PRECISE_COLLISION
 
 namespace clcbs_ros {
 
@@ -286,7 +286,6 @@ struct hash<Constraint> {
 
 namespace clcbs_ros {
 
-// FIXME: modify data struct, it's not the best option
 struct Constraints {
   std::unordered_set<Constraint> constraints;
 
@@ -388,8 +387,8 @@ class Environment {
   Environment(int maxx, int maxy, std::unordered_set<Location> obstacles,
               std::multimap<int, State> dynamic_obstacles,
               std::vector<State> goals)
-      : m_obstacles(std::move(obstacles)),
-        m_dynamic_obstacles(std::move(dynamic_obstacles)),
+      : m_obstacles(obstacles),
+        m_dynamic_obstacles(dynamic_obstacles),
         m_agentIdx(0),
         m_constraints(nullptr),
         m_lastGoalConstraint(-1),
