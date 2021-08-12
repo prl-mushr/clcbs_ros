@@ -485,7 +485,7 @@ class Environment {
   }
 
   int admissibleHeuristic(const State &s) {
-    double reedsSheppCost = 0, dubinsCost = 0;
+    double reedsSheppCost = 0;
     // non-holonomic-without-obstacles heuristic: use a Reeds-Shepp (or Dubins if reversing not allowed)
     std::unique_ptr<ompl::base::SE2StateSpace> path(
         Constants::allow_reverse ? (ompl::base::SE2StateSpace *)(new ompl::base::ReedsSheppStateSpace(Constants::r))
@@ -517,7 +517,7 @@ class Environment {
         twoDoffset;
     // std::cout << "holonomic cost:" << twoDCost << std::endl;
 
-    return std::max({reedsSheppCost, dubinsCost, euclideanCost, twoDCost});
+    return std::max({reedsSheppCost, euclideanCost, twoDCost});
     return 0;
   }
 
