@@ -616,6 +616,10 @@ class Environment {
     m_goals[m_agentIdx] = path.back();
 
     _camefrom.insert(cameFrom.begin(), cameFrom.end());
+    std::cout << "Reeds-Shepp path from " << state << " to " << getGoal() << std::endl;
+    for (int idx = 0; idx < 5; idx++) {
+      std::cout << "Type: " << reedsShepppath.type_[idx] << " Length: " << reedsShepppath.length_[idx] << std::endl;
+    }
     return true;
   }
 
@@ -700,6 +704,10 @@ class Environment {
     m_goals[m_agentIdx] = path.back();
 
     _camefrom.insert(cameFrom.begin(), cameFrom.end());
+    std::cout << "Dubins path from " << state << " to " << getGoal() << std::endl;
+    for (int idx = 0; idx < 3; idx++) {
+      std::cout << "Type: " << dubinsPath.type_[idx] << " Length: " << dubinsPath.length_[idx] << std::endl;
+    }
     return true;
   }
 
