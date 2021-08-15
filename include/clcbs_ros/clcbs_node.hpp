@@ -136,12 +136,10 @@ private:
     int dimx = std::ceil(scalex(m_maxx));
     int dimy = std::ceil(scaley(m_maxy));
     bool success = true;
-    std::vector<int> startTime;
     std::multimap<int, State> dynamic_obstacles;
     std::vector<PlanResult<State, Action, Cost>> solution;
     std::cout << "x: " << dimx << ", y: " << dimy << ", agent: " << m_num_agent << ", task: "<< m_goal_pose.size() << ", waypoint: " << m_num_waypoint << std::endl;
 
-    startTime.push_back(0);
     for (int i = 0; i < m_num_waypoint && success; i++) {
       // set constraints for this waypoint
       setCarParams(i);
@@ -184,30 +182,35 @@ private:
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           cbs(mapf);
       
+      // Plan to 0.5m behind goal to allow for a straight path at the end, then plan straight path to goal
       std::vector<PlanResult<State, Action, Cost>> mid_solution;
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
       success &= mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution);
       startStates.clear();
 
-      if (profile == "pushing") {
+      // Calculate makespan of first part of the plan
+      int mid_makespan = 0;
+      for (const auto& s : mid_solution) {
+        mid_makespan = std::max<int64_t>(mid_makespan, s.states.back().first.time);
+      }
+
+      for (auto& s : sub_solution) {
+        // Add mid_makespan to all times in the second part of the plan
+        for (std::pair<State, double>& pair : s.states) {
+          pair.first.time += mid_makespan;
+        }
+        State last = s.states.back().first;
+        startStates.emplace_back(last.x, last.y, last.yaw);
+      }
+
+      // Add pushed blocks as obstacles if they're being dropped off
+      if (profile == "pushing" && next_profile != "pushing") {
         for (auto& waypoints : goals) {
           obstacles.emplace(scalex(waypoints[i].x), scaley(waypoints[i].y));
         }
       }
 
-      int mid_makespan = 0;
-      for (const auto& s : mid_solution) {
-        mid_makespan = std::max<int64_t>(mid_makespan, s.cost);
-      }
-      int sub_makespan = 0;
-      for (const auto& s : sub_solution) {
-        State last = s.states.back().first;
-        startStates.emplace_back(State(last.x, last.y, last.yaw));
-        sub_makespan = std::max<int64_t>(sub_makespan, s.cost);
-      }
-      sub_makespan += mid_makespan;
-      startTime.push_back(sub_makespan);
-
+      // Combine the plan from start to 0.5m behind goal and the plan from there to goal
       for (int i = 0; i < mid_solution.size(); i++) {
         sub_solution[i].states.insert(sub_solution[i].states.begin(), mid_solution[i].states.begin(), mid_solution[i].states.end());
         sub_solution[i].actions.insert(sub_solution[i].actions.begin(), mid_solution[i].actions.begin(), mid_solution[i].actions.end());
@@ -230,7 +233,7 @@ private:
         geometry_msgs::PoseArray plan;
         plan.header.stamp = ros::Time::now();
         plan.header.frame_id = "map";
-        for(int t = 0; t < startTime.size() - 1; t++) {
+        for(int t = 0; t < m_num_waypoint; t++) {
           int j = t * m_num_agent + a;
           double prev_time = 0.0;
           for (size_t i = 0; i < solution[j].states.size(); i++) {
@@ -238,7 +241,7 @@ private:
                         
             double x = r_scalex(solution[j].states[i].first.x);
             double y = r_scaley(solution[j].states[i].first.y);
-            double time = startTime[t] + solution[j].states[i].first.time;
+            double time = solution[j].states[i].first.time;
 
             tf2::Quaternion quat;
             quat.setRPY(0, 0, -solution[j].states[i].first.yaw);
