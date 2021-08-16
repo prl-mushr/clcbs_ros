@@ -15,7 +15,7 @@ profiles: # definitions for constraint profiles
     carWidth: 0.25
     LF: 0.30
     LB: 0.05
-    obsRadius: 0.1
+    obsRadius: 0.4
     constraintWaitTime: 2
   pushing:
     allow_reverse: False
@@ -31,7 +31,7 @@ profiles: # definitions for constraint profiles
     carWidth: 0.25
     LF: 0.50 # includes length of block being pushed
     LB: 0.05
-    obsRadius: 0.1
+    obsRadius: 0.4
     constraintWaitTime: 2
 
 # which profile to use when navigating to each waypoint (0 indexed)
