@@ -67,7 +67,7 @@ The initial position of car_n. car_n's name is taken from the config file used i
 
 A list of obstacles in the environment to avoid.
 
-#### /clcbs_ros/goals ([clcbs_ros/GoalPoseArray](#clcbs_ros/GoalPoseArray))
+#### /clcbs_ros/goals ([clcbs_ros/GoalPoseArray](#clcbs_rosgoalposearray))
 
 The goal poses for the cars to drive to.
 
