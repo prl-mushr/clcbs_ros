@@ -271,7 +271,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /mushr_coordination/border
+      Marker Topic: /clcbs_ros/border
       Name: Border Marker
       Namespaces:
         {}

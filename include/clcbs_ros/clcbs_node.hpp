@@ -226,7 +226,7 @@ private:
       std::cout << "planner failed" << std::endl;
     }
 
-    create_border(1, 1, 1, 0.1);
+    create_border(1, 1, 1, 0.02);
 
     if (success) {
       for (size_t a = 0; a < m_num_agent; ++a) {
