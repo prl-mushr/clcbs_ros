@@ -1,5 +1,5 @@
 <launch>
-    <arg name="num_waypoint" value = "2" /> <!-- number of waypoint that car have to visit for each task-->
+    <arg name="num_waypoint" value = "1" /> <!-- number of waypoint that car have to visit for each task-->
     <rosparam file="$(find clcbs_ros)/config/4cars.yaml" command="load" ns="clcbs_ros" />
     <rosparam file="$(find clcbs_ros)/config/car_params.yaml" command="load" ns="clcbs_ros" />
 

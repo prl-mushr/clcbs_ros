@@ -5,9 +5,9 @@ car1:
 car2:
     name: "car2"
     color: "00FF00" #green
-# car3:
-#     name: "car3"
-#     color: "FF0000" #red
-# car4:
-#     name: "car4"
-#     color: "800080" #purple
+car3:
+    name: "car3"
+    color: "FF0000" #red
+car4:
+    name: "car4"
+    color: "800080" #purple

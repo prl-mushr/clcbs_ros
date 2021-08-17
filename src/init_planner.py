@@ -21,7 +21,7 @@ if __name__ == "__main__":
     rospy.sleep(1)
 
     count = rospy.get_param("init_planner/num_agent")
-    goal_count = 2
+    goal_count = count
     pubs = []
     pose_pubs = []
     target_pub = []
@@ -56,6 +56,15 @@ if __name__ == "__main__":
     
     car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2]]
     goal_pose = [[[1, 5, math.pi/2], [0, 0.5, math.pi/2]], [[2, 5, math.pi/2], [3, 0.5, math.pi/2]]]
+
+    # car_pose = [[3, 0, math.pi/2], [0, 5, -math.pi/2]]
+    # goal_pose = [[[0, 5, math.pi/2], [3, 0.5, math.pi/2]], [[3, 0, -math.pi/2], [0, 4.5, -math.pi/2]]]
+
+    # car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2], [3, 5, -math.pi/2], [0, 5, -math.pi/2]]
+    # goal_pose = [[[1, 5, math.pi/2], [0, 0.5, math.pi/2]], [[2, 5, math.pi/2], [3, 0.5, math.pi/2]], [[2, 0, -math.pi/2], [0, 4.5, -math.pi/2]], [[1, 0, -math.pi/2], [3, 4.5, -math.pi/2]]]
+
+    # car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2], [3, 5, -math.pi/2], [0, 5, -math.pi/2]]
+    # goal_pose = [[[0, 5, math.pi/2], [3, 0.5, math.pi/2]], [[1.5, 5, math.pi/2], [0, 0.5, math.pi/2]], [[1.5, 0, -math.pi/2], [3, 4.5, -math.pi/2]], [[3, 0, -math.pi/2], [0, 4.5, -math.pi/2]]]
 
     for i in range(count):
         now = rospy.Time.now()
@@ -93,7 +102,7 @@ if __name__ == "__main__":
     goalmsg.maxy = 5
     for i in range(goal_count):
         goalmsg.goals.append(PoseArray())
-        for j in range(2):
+        for j in range(1):
             goal = Pose()
             goal.position.x = goal_pose[i][j][0]
             goal.position.y = goal_pose[i][j][1]
@@ -105,5 +114,3 @@ if __name__ == "__main__":
         for i in range(2):
             goalmsg.goals[i].header.frame_id = "/map"    
             target_pub[i].publish(goalmsg.goals[i])  # use when testing local planner as a standalone system
-    # rospy.spin()
-    
