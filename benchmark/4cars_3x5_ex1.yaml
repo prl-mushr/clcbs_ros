@@ -1,0 +1,47 @@
+num_agent: 4
+num_waypoint: 1
+scale: 1
+minx: 0
+miny: 0
+maxx: 3
+maxy: 5
+
+car1:
+  init_pose:
+    x: 3
+    y: 0
+    theta: 1.5708 # pi / 2
+  waypoint0:
+    x: 1
+    y: 5
+    theta: 1.5708
+
+car2:
+  init_pose:
+    x: 0
+    y: 0
+    theta: 1.5708
+  waypoint0:
+    x: 2
+    y: 5
+    theta: 1.5708
+
+car3:
+  init_pose:
+    x: 3
+    y: 5
+    theta: -1.5708
+  waypoint0:
+    x: 2
+    y: 0
+    theta: -1.5708
+
+car4:
+  init_pose:
+    x: 0
+    y: 5
+    theta: -1.5708
+  waypoint0:
+    x: 1
+    y: 0
+    theta: -1.5708

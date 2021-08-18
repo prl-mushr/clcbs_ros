@@ -20,15 +20,15 @@ if __name__ == "__main__":
     rospy.init_node("init_planner")
     rospy.sleep(1)
 
-    count = rospy.get_param("init_planner/num_agent")
-    goal_count = count
+    num_agent = rospy.get_param("/init_planner/num_agent")
+    num_waypoint = rospy.get_param("/init_planner/num_waypoint")
     pubs = []
     pose_pubs = []
     target_pub = []
     # this is basically initializing all the subscribers for counting the
     # number of cars and publishers for initiailizing pose and goal points.
-    for i in range(count):
-        name = rospy.get_param("init_planner/car" + str(i+1) + "/name")
+    for i in range(num_agent):
+        name = rospy.get_param("/init_planner/car" + str(i+1) + "/name")
         print(name)
         publisher = rospy.Publisher(
             name + "/init_pose", PoseStamped, queue_size=5)
@@ -53,29 +53,23 @@ if __name__ == "__main__":
 
     # car_pose = [[0, 5, -math.pi/2], [0, 0, math.pi/2]]
     # goal_pose = [[[3, 1.5, 0], [1, 0.5, math.pi/2]], [[3, 4, 0], [2, 0.5, math.pi/2]]]
-    
-    car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2]]
-    goal_pose = [[[1, 5, math.pi/2], [0, 0.5, math.pi/2]], [[2, 5, math.pi/2], [3, 0.5, math.pi/2]]]
 
     # car_pose = [[3, 0, math.pi/2], [0, 5, -math.pi/2]]
     # goal_pose = [[[0, 5, math.pi/2], [3, 0.5, math.pi/2]], [[3, 0, -math.pi/2], [0, 4.5, -math.pi/2]]]
 
     # car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2], [3, 5, -math.pi/2], [0, 5, -math.pi/2]]
-    # goal_pose = [[[1, 5, math.pi/2], [0, 0.5, math.pi/2]], [[2, 5, math.pi/2], [3, 0.5, math.pi/2]], [[2, 0, -math.pi/2], [0, 4.5, -math.pi/2]], [[1, 0, -math.pi/2], [3, 4.5, -math.pi/2]]]
-
-    # car_pose = [[3, 0, math.pi/2], [0, 0, math.pi/2], [3, 5, -math.pi/2], [0, 5, -math.pi/2]]
     # goal_pose = [[[0, 5, math.pi/2], [3, 0.5, math.pi/2]], [[1.5, 5, math.pi/2], [0, 0.5, math.pi/2]], [[1.5, 0, -math.pi/2], [3, 4.5, -math.pi/2]], [[3, 0, -math.pi/2], [0, 4.5, -math.pi/2]]]
 
-    for i in range(count):
+    for i in range(num_agent):
         now = rospy.Time.now()
         carmsg = PoseStamped()
         carmsg.header.frame_id = "/map"
         carmsg.header.stamp = now
 
-        carmsg.pose.position.x = car_pose[i][0]
-        carmsg.pose.position.y = car_pose[i][1]
+        carmsg.pose.position.x = rospy.get_param("/init_planner/car" + str(i + 1) + "/init_pose/x")
+        carmsg.pose.position.y = rospy.get_param("/init_planner/car" + str(i + 1) + "/init_pose/y")
         carmsg.pose.position.z = 0.0
-        carmsg.pose.orientation = angle_to_quaternion(car_pose[i][2])
+        carmsg.pose.orientation = angle_to_quaternion(rospy.get_param("/init_planner/car" + str(i + 1) + "/init_pose/theta"))
 
         cur_pose = PoseWithCovarianceStamped()
         cur_pose.header.frame_id = "/map"
@@ -95,19 +89,21 @@ if __name__ == "__main__":
     goalmsg = GoalPoseArray()
     goalmsg.header.frame_id = "/map"
     goalmsg.header.stamp = now
-    goalmsg.scale = 2
-    goalmsg.minx = 0
-    goalmsg.miny = 0
-    goalmsg.maxx = 3
-    goalmsg.maxy = 5
-    for i in range(goal_count):
+    goalmsg.num_agent = num_agent
+    goalmsg.num_waypoint = num_waypoint
+    goalmsg.scale = rospy.get_param("/init_planner/scale")
+    goalmsg.minx = rospy.get_param("/init_planner/minx")
+    goalmsg.miny = rospy.get_param("/init_planner/miny")
+    goalmsg.maxx = rospy.get_param("/init_planner/maxx")
+    goalmsg.maxy = rospy.get_param("/init_planner/maxy")
+    for i in range(num_agent):
         goalmsg.goals.append(PoseArray())
-        for j in range(1):
+        for j in range(num_waypoint):
             goal = Pose()
-            goal.position.x = goal_pose[i][j][0]
-            goal.position.y = goal_pose[i][j][1]
+            goal.position.x = rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoint" + str(j) + "/x")
+            goal.position.y = rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoint" + str(j) + "/y")
             goal.position.z = 0.0
-            goal.orientation = angle_to_quaternion(goal_pose[i][j][2])
+            goal.orientation = angle_to_quaternion(rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoint" + str(j) + "/theta"))
             goalmsg.goals[i].poses.append(goal)
     goal_pub.publish(goalmsg)
     if(testing_standalone):

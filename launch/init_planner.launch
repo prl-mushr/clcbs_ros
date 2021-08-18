@@ -1,12 +1,15 @@
 <launch>
-    <arg name="map_server" value = "1" />
-    <rosparam file="$(find clcbs_ros)/config/4cars.yaml" command="load" ns="init_planner" />
+    <arg name="map_server" default="1" />
+    <arg name="cars_file" default="cars.yaml" />
+    <arg name="benchmark_file" default="2cars_3x5_ex1.yaml" />
+    <rosparam file="$(find clcbs_ros)/config/$(arg cars_file)" command="load" ns="init_planner" />
+    <rosparam file="$(find clcbs_ros)/benchmark/$(arg benchmark_file)" command="load" ns="init_planner" />
 
     <!-- Launch  map server-->
     <group if="$(arg map_server)">
         <include file="$(find mushr_base)/launch/includes/map_server.launch" />
     </group>
     
-    <!-- <node pkg="rosbag" type="record" name="bag_recorder" output='screen' args="record -o /home/mushr/catkin_ws/src/clcbs_ros/bags/ -e '(.*)' -x '(.*)/camera(.*)'"/> -->
+    <!-- <node pkg="rosbag" type="record" name="bag_recorder" output='screen' args="record -o /home/mushr/catkin_ws/src/clcbs_ros/bags/ -e '(.*)' -x '(.*)/camera(.*)'" /> -->
     <node pkg="clcbs_ros" type="init_planner.py" name="init_planner" output="screen" />
 </launch>

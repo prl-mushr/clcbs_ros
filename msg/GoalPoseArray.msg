@@ -1,4 +1,6 @@
 std_msgs/Header header
+int32 num_agent
+int32 num_waypoint
 float64 scale
 float64 minx
 float64 miny

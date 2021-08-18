@@ -24,10 +24,8 @@ public:
       m_planning(false),
       m_ini_obs(false),
       m_ini_goal(false) {
-    nh.getParam("/clcbs_ros/num_waypoint", m_num_waypoint);
-    nh.getParam("/clcbs_ros/num_agent", m_num_agent);
-    m_car_pose = std::vector<State>(m_num_agent);
-    for (size_t i = 0; i < m_num_agent; ++i) {
+    size_t i;
+    for (i = 0; nh.hasParam("/clcbs_ros/car" + std::to_string(i + 1) + "/name"); ++i) {
       std::string name, color;
       nh.getParam("/clcbs_ros/car" + std::to_string(i + 1) + "/name", name);
       nh.getParam("/clcbs_ros/car" + std::to_string(i + 1) + "/color", color);
@@ -48,6 +46,8 @@ public:
         10
       ));
     }
+    m_max_agent = i;
+    m_car_pose = std::vector<State>(m_max_agent);
     m_pub_border = nh.advertise<visualization_msgs::Marker>(
         "/clcbs_ros/border",
         10
@@ -87,6 +87,8 @@ private:
   void GoalCallback(const clcbs_ros::GoalPoseArray::ConstPtr& msg) {
     std::cout << "get goal" << std::endl;
     m_ini_goal = true;
+    m_num_agent = msg->num_agent;
+    m_num_waypoint = msg->num_waypoint;
     m_scale = msg->scale;
     m_minx = msg->minx;
     m_miny = msg->miny;
@@ -123,11 +125,12 @@ private:
       std::cout << g << std::endl;
     }
     // init obstacles
-    for(auto& pos: m_obs_pose) {
+    for (auto& pos: m_obs_pose) {
       obstacles.insert(Location(scalex(pos.first), scaley(pos.second)));
     }
     // init start states
-    for(auto& pos: m_car_pose) {
+    for (int i = 0; i < m_num_agent; i++) {
+      State pos = m_car_pose[i];
       startStates.emplace_back(scalex(pos.x), scaley(pos.y), -pos.yaw);
     }
 
@@ -272,7 +275,7 @@ private:
     
     m_goal_pose.clear();
     m_obs_pose.clear();
-    m_car_pose = std::vector<State>(m_num_agent);
+    m_car_pose = std::vector<State>(m_max_agent);
     m_ini_obs = false;
     m_ini_goal = false;
     m_assigned.clear();
@@ -484,6 +487,7 @@ private:
   bool m_planning;
   bool m_ini_obs;
   bool m_ini_goal;
+  int m_max_agent;
   int m_num_agent;
   int m_num_waypoint;
   double m_scale;

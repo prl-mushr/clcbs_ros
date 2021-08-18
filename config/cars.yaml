@@ -1,4 +1,4 @@
-num_agent: 2
+num_agent: 4
 car1:
     name: "car1"
     color: "0000FF" #blue
