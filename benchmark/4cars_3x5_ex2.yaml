@@ -1,7 +1,4 @@
-# Goal poses should have at least 0.5m free space behind them so the planner doesn't fail
-# If pushing a block or about to push, at least 0.5m + (pushing LF + default value of LF) / 2
-
-num_agent: 2
+num_agent: 4
 num_waypoint: 1
 scale: 1
 minx: 0
@@ -15,7 +12,7 @@ car1:
     y: 0
     theta: 1.5708 # pi / 2
   waypoint0:
-    x: 1
+    x: 0
     y: 5
     theta: 1.5708
 
@@ -25,6 +22,26 @@ car2:
     y: 0
     theta: 1.5708
   waypoint0:
-    x: 2
+    x: 1.5
     y: 5
     theta: 1.5708
+
+car3:
+  init_pose:
+    x: 3
+    y: 5
+    theta: -1.5708
+  waypoint0:
+    x: 1.5
+    y: 0
+    theta: -1.5708
+
+car4:
+  init_pose:
+    x: 0
+    y: 5
+    theta: -1.5708
+  waypoint0:
+    x: 3
+    y: 0
+    theta: -1.5708
