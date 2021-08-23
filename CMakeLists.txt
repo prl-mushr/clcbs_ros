@@ -55,7 +55,7 @@ target_link_libraries(clcbs_node ${catkin_LIBRARIES} ${OMPL_LIBRARIES})
 add_dependencies(clcbs_node ${PROJECT_NAME}_generate_messages_cpp)
 
 catkin_install_python(PROGRAMS 
-  src/init_planner.py
+  src/init_clcbs.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

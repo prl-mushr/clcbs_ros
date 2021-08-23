@@ -17,18 +17,18 @@ def angle_to_quaternion(angle):
 
 
 if __name__ == "__main__":
-    rospy.init_node("init_planner")
+    rospy.init_node("init_clcbs")
     rospy.sleep(1)
 
-    num_agent = rospy.get_param("/init_planner/num_agent")
-    num_waypoint = rospy.get_param("/init_planner/num_waypoint")
+    num_agent = rospy.get_param("/init_clcbs/num_agent")
+    num_waypoint = rospy.get_param("/init_clcbs/num_waypoint")
     pubs = []
     pose_pubs = []
     target_pub = []
     # this is basically initializing all the subscribers for counting the
     # number of cars and publishers for initializing pose and goal points.
     for i in range(num_agent):
-        name = rospy.get_param("/init_planner/car" + str(i+1) + "/name")
+        name = rospy.get_param("/init_clcbs/car" + str(i+1) + "/name")
         print(name)
         publisher = rospy.Publisher(
             name + "/init_pose", PoseStamped, queue_size=5)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         carmsg.header.frame_id = "/map"
         carmsg.header.stamp = now
 
-        start_pose = rospy.get_param("/init_planner/car" + str(i + 1) + "/start")
+        start_pose = rospy.get_param("/init_clcbs/car" + str(i + 1) + "/start")
         carmsg.pose.position.x = start_pose[0]
         carmsg.pose.position.y = start_pose[1]
         carmsg.pose.position.z = 0.0
@@ -80,14 +80,14 @@ if __name__ == "__main__":
     goalmsg.header.stamp = now
     goalmsg.num_agent = num_agent
     goalmsg.num_waypoint = num_waypoint
-    goalmsg.scale = rospy.get_param("/init_planner/scale")
-    goalmsg.minx = rospy.get_param("/init_planner/minx")
-    goalmsg.miny = rospy.get_param("/init_planner/miny")
-    goalmsg.maxx = rospy.get_param("/init_planner/maxx")
-    goalmsg.maxy = rospy.get_param("/init_planner/maxy")
+    goalmsg.scale = rospy.get_param("/init_clcbs/scale")
+    goalmsg.minx = rospy.get_param("/init_clcbs/minx")
+    goalmsg.miny = rospy.get_param("/init_clcbs/miny")
+    goalmsg.maxx = rospy.get_param("/init_clcbs/maxx")
+    goalmsg.maxy = rospy.get_param("/init_clcbs/maxy")
     for i in range(num_agent):
         goalmsg.goals.append(PoseArray())
-        waypoints = rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoints")
+        waypoints = rospy.get_param("/init_clcbs/car" + str(i + 1) + "/waypoints")
         for j in range(num_waypoint):
             goal = Pose()
             goal.position.x = waypoints[j][0]
