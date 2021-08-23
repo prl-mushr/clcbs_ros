@@ -21,7 +21,7 @@ cd ~/catkin_ws
 catkin_make
 ```
 
-If you want to launch the map server in `launch/init_planner.launch`, install the [MuSHR platform](https://mushr.io/tutorials/quickstart/). To disable the map server, edit the `map_server` arg in `launch/init_planner.launch` to have a value of 0.
+If you want to launch the map server in `launch/init_clcbs.launch`, install the [MuSHR platform](https://mushr.io/tutorials/quickstart/). To disable the map server, edit the `map_server` arg in `launch/init_clcbs.launch` to have a value of 0.
 
 ## Running
 
@@ -42,7 +42,7 @@ roslaunch clcbs_ros clcbs_ros.launch
 Terminal 3:
 
 ```bash
-roslaunch clcbs_ros init_planner.launch
+roslaunch clcbs_ros init_clcbs.launch
 ```
 
 ## Visualizing with rviz
@@ -53,7 +53,7 @@ In a new terminal:
 rviz -d ~/catkin_ws/src/clcbs_ros/rviz/clcbs.rviz
 ```
 
-Make sure to start rviz before launching `init_planner.launch`.
+Make sure to start rviz before launching `init_clcbs.launch`.
 
 ## API
 
@@ -61,7 +61,7 @@ Make sure to start rviz before launching `init_planner.launch`.
 
 #### /{car_n's name}/init_pose ([geometry_msgs/PoseStamped](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/PoseStamped.html))
 
-The initial position of car_n. car_n's name is taken from the config file used in both `clcbs_ros.launch` and `init_planner.launch`.
+The initial position of car_n. car_n's name is taken from the config file used in both `clcbs_ros.launch` and `init_clcbs.launch`.
 
 #### /clcbs_ros/obstacles ([geometry_msgs/PoseArray](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/PoseArray.html))
 
@@ -75,11 +75,11 @@ The goal poses for the cars to drive to.
 
 #### /{car_n's name}/waypoints ([geometry_msgs/PoseArray](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/PoseArray.html))
 
-The navigation plan outputted for car_n. car_n's name is taken from the config file used in both `clcbs_ros.launch` and `init_planner.launch`.
+The navigation plan outputted for car_n. car_n's name is taken from the config file used in both `clcbs_ros.launch` and `init_clcbs.launch`.
 
 #### /{car_n's name}/marker ([visualization_msgs/Marker](http://docs.ros.org/en/api/visualization_msgs/html/msg/Marker.html))
 
-Markers for visualization of car_n's inputted goal poses. car_n's name is taken from the config file used in both `clcbs_ros.launch` and `init_planner.launch`.
+Markers for visualization of car_n's inputted goal poses. car_n's name is taken from the config file used in both `clcbs_ros.launch` and `init_clcbs.launch`.
 
 #### /clcbs_ros/border ([visualization_msgs/Marker](http://docs.ros.org/en/api/visualization_msgs/html/msg/Marker.html))
 
