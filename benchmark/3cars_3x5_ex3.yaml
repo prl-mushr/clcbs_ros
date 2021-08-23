@@ -7,31 +7,19 @@ maxx: 3
 maxy: 5
 
 car1:
-  init_pose:
-    x: 3
-    y: 0
-    theta: 1.5708 # pi / 2
-  waypoint0:
-    x: 0
-    y: 5
-    theta: 1.5708
+  start: [3, 0, 1.5708]
+  waypoints: [
+    [0, 5, 1.5708]
+  ]
 
 car2:
-  init_pose:
-    x: 0
-    y: 0
-    theta: 1.5708
-  waypoint0:
-    x: 1.5
-    y: 5
-    theta: 1.5708
+  start: [0, 0, 1.5708]
+  waypoints: [
+    [1.5, 5, 1.5708]
+  ]
 
 car3:
-  init_pose:
-    x: 3
-    y: 5
-    theta: -1.5708
-  waypoint0:
-    x: 1.5
-    y: 0
-    theta: -1.5708
+  start: [3, 5, -1.5708]
+  waypoints: [
+    [1.5, 0, -1.5708]
+  ]

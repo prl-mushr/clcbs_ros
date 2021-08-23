@@ -26,7 +26,7 @@ if __name__ == "__main__":
     pose_pubs = []
     target_pub = []
     # this is basically initializing all the subscribers for counting the
-    # number of cars and publishers for initiailizing pose and goal points.
+    # number of cars and publishers for initializing pose and goal points.
     for i in range(num_agent):
         name = rospy.get_param("/init_planner/car" + str(i+1) + "/name")
         print(name)
@@ -54,10 +54,11 @@ if __name__ == "__main__":
         carmsg.header.frame_id = "/map"
         carmsg.header.stamp = now
 
-        carmsg.pose.position.x = rospy.get_param("/init_planner/car" + str(i + 1) + "/init_pose/x")
-        carmsg.pose.position.y = rospy.get_param("/init_planner/car" + str(i + 1) + "/init_pose/y")
+        start_pose = rospy.get_param("/init_planner/car" + str(i + 1) + "/start")
+        carmsg.pose.position.x = start_pose[0]
+        carmsg.pose.position.y = start_pose[1]
         carmsg.pose.position.z = 0.0
-        carmsg.pose.orientation = angle_to_quaternion(rospy.get_param("/init_planner/car" + str(i + 1) + "/init_pose/theta"))
+        carmsg.pose.orientation = angle_to_quaternion(start_pose[2])
 
         cur_pose = PoseWithCovarianceStamped()
         cur_pose.header.frame_id = "/map"
@@ -86,12 +87,13 @@ if __name__ == "__main__":
     goalmsg.maxy = rospy.get_param("/init_planner/maxy")
     for i in range(num_agent):
         goalmsg.goals.append(PoseArray())
+        waypoints = rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoints")
         for j in range(num_waypoint):
             goal = Pose()
-            goal.position.x = rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoint" + str(j) + "/x")
-            goal.position.y = rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoint" + str(j) + "/y")
+            goal.position.x = waypoints[j][0]
+            goal.position.y = waypoints[j][1]
             goal.position.z = 0.0
-            goal.orientation = angle_to_quaternion(rospy.get_param("/init_planner/car" + str(i + 1) + "/waypoint" + str(j) + "/theta"))
+            goal.orientation = angle_to_quaternion(waypoints[j][2])
             goalmsg.goals[i].poses.append(goal)
     goal_pub.publish(goalmsg)
     if(testing_standalone):
