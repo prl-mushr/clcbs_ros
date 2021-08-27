@@ -1,0 +1,43 @@
+num_agent: 6
+num_waypoint: 1
+scale: 1
+minx: 0
+miny: 0
+maxx: 8
+maxy: 8
+
+car1:
+  start: [1, 0, 1.5708]
+  waypoints: [
+    [1, 8, 1.5708]
+  ]
+
+car2:
+  start: [3, 0, 1.5708]
+  waypoints: [
+    [3, 8, 1.5708]
+  ]
+
+car3:
+  start: [5, 0, 1.5708]
+  waypoints: [
+    [5, 8, 1.5708]
+  ]
+
+car4:
+  start: [0, 1, 0]
+  waypoints: [
+    [8, 1, 0]
+  ]
+
+car5:
+  start: [0, 3, 0]
+  waypoints: [
+    [8, 3, 0]
+  ]
+
+car6:
+  start: [0, 5, 0]
+  waypoints: [
+    [8, 5, 0]
+  ]
