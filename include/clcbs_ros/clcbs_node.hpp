@@ -364,11 +364,11 @@ private:
   }
 
   double scalex(double x) {
-    x = (x - m_minx) * m_scale;
+    x -= m_minx;
     // Round close to 0 numbers to 0 (keeps points within boundaries)
     if (std::abs(x) < 0.01) {
       x = 0.01;
-    } else if (std::abs(x - ((m_maxx - m_minx) * m_scale)) < 0.01) {
+    } else if (std::abs(x - (m_maxx - m_minx)) < 0.01) {
       // Hacky fix for segfaults in mushr_environment functions
       x -= 0.01;
     }
@@ -376,21 +376,21 @@ private:
   }
 
   double scaley(double y) {
-    y = (y - m_miny) * m_scale;
+    y -= m_miny;
     if (std::abs(y) < 0.01) {
       y = 0.01;
-    } else if (std::abs(y - ((m_maxy - m_miny) * m_scale)) < 0.01) {
+    } else if (std::abs(y - (m_maxy - m_miny)) < 0.01) {
       y -= 0.01;
     }
     return y;
   }
 
   double r_scalex(double x) {
-    return x / m_scale + m_minx;
+    return x + m_minx;
   }
 
   double r_scaley(double y) {
-    return y / m_scale + m_miny;
+    return y + m_miny;
   }
 
   double yawFromQuat(const geometry_msgs::Quaternion& q) {
@@ -415,21 +415,21 @@ private:
       Constants::allow_reverse = allow_reverse;
     }
     if (nh.getParam(name + "L", L)) {
-      Constants::L = L * m_scale;
+      Constants::L = L;
     }
     if (nh.getParam(name + "speed_limit", speed_limit)) {
-      Constants::speed_limit = speed_limit * m_scale;
+      Constants::speed_limit = speed_limit / m_scale;
     }
     if (nh.getParam(name + "steer_limit", steer_limit)) {
       Constants::steer_limit = steer_limit;
     }
     if (nh.getParam(name + "r", r)) {
-      Constants::r = r * m_scale;
+      Constants::r = r;
     } else {
       Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
     }
     if (nh.getParam(name + "deltat", deltat)) {
-      Constants::deltat = deltat;
+      Constants::deltat = deltat / m_scale;
     } else {
       Constants::deltat = Constants::speed_limit / Constants::r;
     }
@@ -446,16 +446,16 @@ private:
       Constants::mapResolution = mapResolution;
     }
     if (nh.getParam(name + "carWidth", carWidth)) {
-      Constants::carWidth = carWidth * m_scale;
+      Constants::carWidth = carWidth;
     }
     if (nh.getParam(name + "LF", LF)) {
-      Constants::LF = LF * m_scale;
+      Constants::LF = LF;
     }
     if (nh.getParam(name + "LB", LB)) {
-      Constants::LB = LB * m_scale;
+      Constants::LB = LB;
     }
     if (nh.getParam(name + "obsRadius", obsRadius)) {
-      Constants::obsRadius = obsRadius * m_scale;
+      Constants::obsRadius = obsRadius;
     }
     if (nh.getParam(name + "constraintWaitTime", constraintWaitTime)) {
       Constants::constraintWaitTime = constraintWaitTime;
