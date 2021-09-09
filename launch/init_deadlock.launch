@@ -1,0 +1,13 @@
+<launch>
+    <arg name="map_server" default="1" />
+    <arg name="cars_file" default="cars.yaml" />
+    <rosparam file="$(find clcbs_ros)/config/$(arg cars_file)" command="load" ns="init_deadlock" />
+
+    <!-- Launch  map server-->
+    <group if="$(arg map_server)">
+        <include file="$(find mushr_base)/launch/includes/map_server.launch" />
+    </group>
+
+    <!-- <node pkg="rosbag" type="record" name="bag_recorder" output='screen' args="record -o /home/mushr/catkin_ws/src/clcbs_ros/bags/ -e '(.*)' -x '(.*)/camera(.*)'" /> -->
+    <node pkg="clcbs_ros" type="init_deadlock.py" name="init_deadlock" output="screen" />
+</launch>

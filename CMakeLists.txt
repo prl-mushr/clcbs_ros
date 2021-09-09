@@ -35,16 +35,16 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS 
-    roscpp 
-    rospy 
+  CATKIN_DEPENDS
+    roscpp
+    rospy
     std_msgs
     tf2
     visualization_msgs
     message_runtime
 )
 
-include_directories(include 
+include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${OMPL_INCLUDE_DIRS}
   ${Boost_LIBRARIES}
@@ -54,8 +54,9 @@ add_executable(clcbs_node src/clcbs_node.cpp include/clcbs_ros/clcbs_node.hpp)
 target_link_libraries(clcbs_node ${catkin_LIBRARIES} ${OMPL_LIBRARIES})
 add_dependencies(clcbs_node ${PROJECT_NAME}_generate_messages_cpp)
 
-catkin_install_python(PROGRAMS 
+catkin_install_python(PROGRAMS
   src/init_clcbs.py
+  src/init_deadlock.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
