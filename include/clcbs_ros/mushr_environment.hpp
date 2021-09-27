@@ -60,6 +60,8 @@ static float LB = 0.05f;
 static float obsRadius = 1;
 // least time to wait for constraint
 static int constraintWaitTime = 2;
+// buffer space around each side of the agent
+static float space_buffer = 0.0f;
 
 // R = 3, ~18 DEG
 std::vector<double> dyaw = {0, deltat, -deltat, 0, -deltat, deltat};
@@ -386,14 +388,16 @@ class Environment {
  public:
   Environment(int maxx, int maxy, std::unordered_set<Location> obstacles,
               std::multimap<int, State> dynamic_obstacles,
-              std::vector<State> goals)
+              std::vector<State> goals, std::shared_ptr<bool> _within_time)
       : m_obstacles(obstacles),
         m_dynamic_obstacles(dynamic_obstacles),
         m_agentIdx(0),
         m_constraints(nullptr),
         m_lastGoalConstraint(-1),
         m_highLevelExpanded(0),
-        m_lowLevelExpanded(0) {
+        m_lowLevelExpanded(0),
+        within_time(_within_time),
+        start_time(std::chrono::steady_clock::time_point::min()) {
     m_dimx = maxx / Constants::mapResolution;
     m_dimy = maxy / Constants::mapResolution;
     // std::cout << "env build " << m_dimx << " " << m_dimy << " "
@@ -525,7 +529,20 @@ class Environment {
       const State &state, double gscore,
       std::unordered_map<State, std::tuple<State, Action, double, double>,
                          std::hash<State>> &_camefrom) {
-    return Constants::allow_reverse ? isSolutionWithReverse(state, gscore, _camefrom) : isSolutionWithoutReverse(state, gscore, _camefrom);
+    // Hacky way to stay within time limit
+    if (start_time == std::chrono::steady_clock::time_point::min()) {
+      start_time = std::chrono::steady_clock::now();
+    } else if (!*within_time || std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - start_time).count() > MAX_RUNTIME) {
+      *within_time = false;
+      start_time = std::chrono::steady_clock::time_point::min();
+      _camefrom[getGoal()] = std::make_tuple<>(state, 0, 0, 0); // filler values to prevent segfaults
+      return true;
+    }
+    bool isSol = Constants::allow_reverse ? isSolutionWithReverse(state, gscore, _camefrom) : isSolutionWithoutReverse(state, gscore, _camefrom);
+    if (isSol) {
+      start_time = std::chrono::steady_clock::time_point::min();
+    }
+    return isSol;
   }
 
   bool isSolutionWithReverse(
@@ -966,6 +983,8 @@ class Environment {
   int m_lastGoalConstraint;
   int m_highLevelExpanded;
   int m_lowLevelExpanded;
+  std::shared_ptr<bool> within_time;
+  std::chrono::steady_clock::time_point start_time;
 };
 
 }  // namespace clcbs_ros

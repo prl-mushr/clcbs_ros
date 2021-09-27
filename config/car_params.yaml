@@ -7,7 +7,6 @@ profiles: # definitions for constraint profiles
     # These parameters are not required, the clcbs node can calculate them based on the previous parameters
     # Specifying these parameters will override the calculated values
     # r: 0.893 # L / tan(abs(steer_limit)))
-    # deltat: 0.448 # speed_limit / r
     penaltyTurning: 1.5
     penaltyReversing: 1.0
     penaltyCOD: 2.0
@@ -17,13 +16,13 @@ profiles: # definitions for constraint profiles
     LB: 0.05
     obsRadius: 0.4
     constraintWaitTime: 2
+    space_buffer: 0.3
   pushing:
     allow_reverse: False
     L: 0.29
     speed_limit: 0.4
     steer_limit: 0.157 # 0.05 * pi
     # r: 0.893 # L / tan(abs(steer_limit)))
-    # deltat: 0.448 # speed_limit / r
     penaltyTurning: 1.5
     penaltyReversing: 2.0
     penaltyCOD: 2.0
@@ -33,6 +32,7 @@ profiles: # definitions for constraint profiles
     LB: 0.05
     obsRadius: 0.4
     constraintWaitTime: 2
+    space_buffer: 0.3
 
 # which profile to use when navigating to each waypoint (0 indexed)
 # if a profile is not specified for a waypoint, default profile is used

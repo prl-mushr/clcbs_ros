@@ -139,6 +139,7 @@ private:
     int dimx = std::ceil(scalex(m_maxx));
     int dimy = std::ceil(scaley(m_maxy));
     bool success = true;
+    std::shared_ptr<bool> within_time = std::make_shared<bool>(true);
     std::multimap<int, State> dynamic_obstacles;
     std::vector<PlanResult<State, Action, Cost>> solution;
     std::cout << "x: " << dimx << ", y: " << dimy << ", agent: " << m_num_agent << ", task: "<< m_goal_pose.size() << ", waypoint: " << m_num_waypoint << std::endl;
@@ -177,18 +178,39 @@ private:
         cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
       }
 
-      Environment mid_mapf(dimx, dimy, obstacles, dynamic_obstacles, mid_goals);
+      Environment mid_mapf(dimx, dimy, obstacles, dynamic_obstacles, mid_goals, within_time);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           mid_cbs(mid_mapf);
 
-      Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, cur_goals);
+      Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, cur_goals, within_time);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           cbs(mapf);
       
       // Plan to 0.5m behind goal to allow for a straight path at the end, then plan straight path to goal
       std::vector<PlanResult<State, Action, Cost>> mid_solution;
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
-      success &= mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution);
+
+      bool buffer_success = false;
+      while (!buffer_success && Constants::space_buffer >= 0.0f) {
+        Constants::carWidth += 2 * Constants::space_buffer;
+        Constants::LF += Constants::space_buffer;
+        Constants::LB += Constants::space_buffer;
+
+        *within_time = true;
+        mid_solution.clear();
+        sub_solution.clear();
+        buffer_success = mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution) && *within_time;
+
+        Constants::carWidth -= 2 * Constants::space_buffer;
+        Constants::LF -= Constants::space_buffer;
+        Constants::LB -= Constants::space_buffer;
+        
+        Constants::space_buffer -= 0.1f;
+        if (std::abs(Constants::space_buffer) < 0.01f) {
+          Constants::space_buffer = 0.0f;
+        }
+      }
+      success &= buffer_success;
       startStates.clear();
 
       // Calculate makespan of first part of the plan
@@ -224,7 +246,7 @@ private:
     }
 
     if (success) {
-      std::cout << "planner success" << std::endl;
+      std::cout << "planner success with buffer " << Constants::space_buffer << std::endl;
     } else {
       std::cout << "planner failed" << std::endl;
     }
@@ -403,7 +425,7 @@ private:
 
   void setCarParams(int waypoint) {
     float L, speed_limit, steer_limit, r, deltat, penaltyTurning, penaltyReversing;
-    float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius;
+    float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius, space_buffer;
     int constraintWaitTime;
     bool allow_reverse;
 
@@ -427,11 +449,6 @@ private:
       Constants::r = r;
     } else {
       Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
-    }
-    if (nh.getParam(name + "deltat", deltat)) {
-      Constants::deltat = deltat / m_scale;
-    } else {
-      Constants::deltat = Constants::speed_limit / Constants::r;
     }
     if (nh.getParam(name + "penaltyTurning", penaltyTurning)) {
       Constants::penaltyTurning = penaltyTurning;
@@ -460,7 +477,11 @@ private:
     if (nh.getParam(name + "constraintWaitTime", constraintWaitTime)) {
       Constants::constraintWaitTime = constraintWaitTime;
     }
+    if (nh.getParam(name + "space_buffer", space_buffer)) {
+      Constants::space_buffer = std::max(space_buffer, 0.0f);
+    }
 
+    Constants::deltat = Constants::speed_limit / Constants::r;
     Constants::xyResolution = Constants::r * Constants::deltat;
     Constants::yawResolution = Constants::deltat;
 

@@ -13,7 +13,6 @@ def angle_to_quaternion(angle):
 
 if __name__ == "__main__":
     rospy.init_node("init_deadlock")
-    rospy.sleep(1)
 
     num_agent = 4
     pubs = []
@@ -55,7 +54,6 @@ if __name__ == "__main__":
         cur_pose.header.stamp = now
         cur_pose.pose.pose = carmsg.pose
         print(carmsg)
-        rospy.sleep(1)
         pubs[i].publish(carmsg)
         pose_pubs[i].publish(cur_pose)
 
