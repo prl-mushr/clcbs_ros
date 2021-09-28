@@ -3,6 +3,7 @@
 import rospy
 import tf
 from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Quaternion,PoseWithCovarianceStamped
+from visualization_msgs.msg import Marker
 import time
 import math
 
@@ -18,10 +19,11 @@ if __name__ == "__main__":
     pubs = []
     pose_pubs = []
     waypoint_pubs = []
+    marker_pubs = []
     # this is basically initializing all the subscribers for counting the
     # number of cars and publishers for initializing pose and goal points.
     for i in range(num_agent):
-        name = rospy.get_param("/init_deadlock/car" + str(i+1) + "/name")
+        name = rospy.get_param("/init_deadlock/car" + str(i + 1) + "/name")
         print(name)
         publisher = rospy.Publisher(
             name + "/init_pose", PoseStamped, queue_size=5)
@@ -31,6 +33,8 @@ if __name__ == "__main__":
         pose_pubs.append(pose_publisher)
         waypoint_pub = rospy.Publisher(name + "/waypoints", PoseArray, queue_size=5)
         waypoint_pubs.append(waypoint_pub)
+        marker_pub = rospy.Publisher(name + "/marker", Marker, queue_size=5)
+        marker_pubs.append(marker_pub)
 
     rospy.sleep(1)
 
@@ -57,9 +61,37 @@ if __name__ == "__main__":
         pubs[i].publish(carmsg)
         pose_pubs[i].publish(cur_pose)
 
-    for i in range(num_agent):
+        marker = Marker()
+        marker_size = 0.25
+        marker.pose.position.x = goal_poses[i][0]
+        marker.pose.position.y = goal_poses[i][1]
+        marker.pose.position.z = 0
+
+        marker.pose.orientation.x = 0
+        marker.pose.orientation.y = 0
+        marker.pose.orientation.z = 0
+        marker.pose.orientation.w = 1
+
+        marker_hex = int(rospy.get_param("/init_deadlock/car" + str(i + 1) + "/color"), 16)
+        marker.color.r = marker_hex >> 16 & 0xff;
+        marker.color.g = marker_hex >> 8 & 0xff;
+        marker.color.b = marker_hex & 0xff;
+        marker.color.a = 1.0;
+
+        marker.scale.x = marker_size;
+        marker.scale.y = marker_size;
+        marker.scale.z = marker_size;
+
+        marker.header.frame_id = "/map"
+        marker.header.stamp = now
+        marker.id = i
+
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+
+        marker_pubs[i].publish(marker)
+
         goalmsg = PoseArray()
-        now = rospy.Time.now()
         goalmsg.header.stamp = now
         goalmsg.header.frame_id = "/map"
         for j in range(num_waypoint):
