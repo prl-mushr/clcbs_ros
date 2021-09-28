@@ -112,7 +112,6 @@ private:
     std::vector<State> startStates;
     std::vector<Waypoints> goals;
 
-    int extra = 0;
     // init goals
     for (auto& goal: m_goal_pose) {
       std::vector<State> ls;
@@ -424,7 +423,7 @@ private:
   }
 
   void setCarParams(int waypoint) {
-    float L, speed_limit, steer_limit, r, deltat, penaltyTurning, penaltyReversing;
+    float L, speed_limit, steer_limit, deltat, penaltyTurning, penaltyReversing;
     float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius, space_buffer;
     int constraintWaitTime;
     bool allow_reverse;
@@ -432,58 +431,73 @@ private:
     std::string profile("default");
     nh.getParam("/clcbs_ros/profile" + std::to_string(waypoint), profile);
     std::string name = "/clcbs_ros/profiles/" + profile + "/";
+    std::string def = "/clcbs_ros/profiles/default/";
 
-    if (nh.getParam(name + "allow_reverse", allow_reverse)) {
-      Constants::allow_reverse = allow_reverse;
+    if (!nh.getParam(name + "allow_reverse", allow_reverse)) {
+      nh.getParam(def + "allow_reverse", allow_reverse);
     }
-    if (nh.getParam(name + "L", L)) {
-      Constants::L = L;
+    if (!nh.getParam(name + "L", L)) {
+      nh.getParam(def + "L", L);
     }
-    if (nh.getParam(name + "speed_limit", speed_limit)) {
-      Constants::speed_limit = speed_limit / m_scale;
+    if (!nh.getParam(name + "speed_limit", speed_limit)) {
+      nh.getParam(def + "speed_limit", speed_limit);
     }
-    if (nh.getParam(name + "steer_limit", steer_limit)) {
-      Constants::steer_limit = steer_limit;
+    if (!nh.getParam(name + "steer_limit", steer_limit)) {
+      nh.getParam(def + "steer_limit", steer_limit);
     }
-    if (nh.getParam(name + "r", r)) {
-      Constants::r = r;
-    } else {
-      Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
+    if (!nh.getParam(name + "penaltyTurning", penaltyTurning)) {
+      nh.getParam(def + "penaltyTurning", penaltyTurning);
     }
-    if (nh.getParam(name + "penaltyTurning", penaltyTurning)) {
-      Constants::penaltyTurning = penaltyTurning;
+    if (!nh.getParam(name + "penaltyReversing", penaltyReversing)) {
+      nh.getParam(def + "penaltyReversing", penaltyReversing);
     }
-    if (nh.getParam(name + "penaltyReversing", penaltyReversing)) {
-      Constants::penaltyReversing = penaltyReversing;
+    if (!nh.getParam(name + "penaltyCOD", penaltyCOD)) {
+      nh.getParam(def + "penaltyCOD", penaltyCOD);
     }
-    if (nh.getParam(name + "penaltyCOD", penaltyCOD)) {
-      Constants::penaltyCOD = penaltyCOD;
+    if (!nh.getParam(name + "mapResolution", mapResolution)) {
+      nh.getParam(def + "mapResolution", mapResolution);
     }
-    if (nh.getParam(name + "mapResolution", mapResolution)) {
-      Constants::mapResolution = mapResolution;
+    if (!nh.getParam(name + "carWidth", carWidth)) {
+      nh.getParam(def + "carWidth", carWidth);
     }
-    if (nh.getParam(name + "carWidth", carWidth)) {
-      Constants::carWidth = carWidth;
+    if (!nh.getParam(name + "LF", LF)) {
+      nh.getParam(def + "LF", LF);
     }
-    if (nh.getParam(name + "LF", LF)) {
-      Constants::LF = LF;
+    if (!nh.getParam(name + "LB", LB)) {
+      nh.getParam(def + "LB", LB);
     }
-    if (nh.getParam(name + "LB", LB)) {
-      Constants::LB = LB;
+    if (!nh.getParam(name + "obsRadius", obsRadius)) {
+      nh.getParam(def + "obsRadius", obsRadius);
     }
-    if (nh.getParam(name + "obsRadius", obsRadius)) {
-      Constants::obsRadius = obsRadius;
+    if (!nh.getParam(name + "constraintWaitTime", constraintWaitTime)) {
+      nh.getParam(def + "constraintWaitTime", constraintWaitTime);
     }
-    if (nh.getParam(name + "constraintWaitTime", constraintWaitTime)) {
-      Constants::constraintWaitTime = constraintWaitTime;
-    }
-    if (nh.getParam(name + "space_buffer", space_buffer)) {
-      Constants::space_buffer = std::max(space_buffer, 0.0f);
+    if (!nh.getParam(name + "space_buffer", space_buffer)) {
+      nh.getParam(def + "space_buffer", space_buffer);
     }
 
+    Constants::allow_reverse = allow_reverse;
+
+    Constants::L = L;
+    Constants::speed_limit = speed_limit / m_scale;
+    Constants::steer_limit = steer_limit;
+
+    Constants::r = Constants::L / tanf(fabs(Constants::steer_limit));
     Constants::deltat = Constants::speed_limit / Constants::r;
+
+    Constants::penaltyTurning = penaltyTurning;
+    Constants::penaltyReversing = penaltyReversing;
+    Constants::penaltyCOD = penaltyCOD;
+    Constants::mapResolution = mapResolution;
     Constants::xyResolution = Constants::r * Constants::deltat;
     Constants::yawResolution = Constants::deltat;
+
+    Constants::carWidth = carWidth;
+    Constants::LF = LF;
+    Constants::LB = LB;
+    Constants::obsRadius = obsRadius;
+    Constants::constraintWaitTime = constraintWaitTime;
+    Constants::space_buffer = std::max(space_buffer, 0.0f);
 
     Constants::dyaw = {0, Constants::deltat, -Constants::deltat, 0, -Constants::deltat, Constants::deltat};
     Constants::dx = {Constants::r * Constants::deltat, Constants::r *sin(Constants::deltat),  Constants::r *sin(Constants::deltat),

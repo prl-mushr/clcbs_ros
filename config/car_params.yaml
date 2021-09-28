@@ -4,35 +4,21 @@ profiles: # definitions for constraint profiles
     L: 0.29
     speed_limit: 0.4
     steer_limit: 0.314 # 0.1 * pi
-    # These parameters are not required, the clcbs node can calculate them based on the previous parameters
-    # Specifying these parameters will override the calculated values
-    # r: 0.893 # L / tan(abs(steer_limit)))
+    # To calculate turning radius, use r = L / tan(abs(steer_limit)))
     penaltyTurning: 1.5
     penaltyReversing: 1.0
     penaltyCOD: 2.0
     mapResolution: 0.1
-    carWidth: 0.25
-    LF: 0.30
-    LB: 0.05
+    carWidth: 0.25 # 0.27
+    LF: 0.30 # 0.38
+    LB: 0.05 # 0.08
     obsRadius: 0.4
     constraintWaitTime: 2
     space_buffer: 0.3
-  pushing:
+  pushing: # non-default profiles only need to specify non-default values
     allow_reverse: False
-    L: 0.29
-    speed_limit: 0.4
     steer_limit: 0.157 # 0.05 * pi
-    # r: 0.893 # L / tan(abs(steer_limit)))
-    penaltyTurning: 1.5
-    penaltyReversing: 2.0
-    penaltyCOD: 2.0
-    mapResolution: 0.1
-    carWidth: 0.25
-    LF: 0.50 # includes length of block being pushed
-    LB: 0.05
-    obsRadius: 0.4
-    constraintWaitTime: 2
-    space_buffer: 0.3
+    LF: 0.50 # 0.58 # includes length of block being pushed
 
 # which profile to use when navigating to each waypoint (0 indexed)
 # if a profile is not specified for a waypoint, default profile is used
