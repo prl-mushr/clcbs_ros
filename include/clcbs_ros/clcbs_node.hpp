@@ -191,18 +191,18 @@ private:
 
       bool buffer_success = false;
       while (!buffer_success && Constants::space_buffer >= 0.0f) {
-        Constants::carWidth += 2 * Constants::space_buffer;
-        Constants::LF += Constants::space_buffer;
-        Constants::LB += Constants::space_buffer;
+        Constants::carWidth *= 1.0f + 2 * Constants::space_buffer;
+        Constants::LF *= 1.0f + Constants::space_buffer;
+        Constants::LB *= 1.0f + Constants::space_buffer;
 
         *within_time = true;
         mid_solution.clear();
         sub_solution.clear();
         buffer_success = mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution) && *within_time;
 
-        Constants::carWidth -= 2 * Constants::space_buffer;
-        Constants::LF -= Constants::space_buffer;
-        Constants::LB -= Constants::space_buffer;
+        Constants::carWidth /= 1.0f + 2 * Constants::space_buffer;
+        Constants::LF /= 1.0f + Constants::space_buffer;
+        Constants::LB /= 1.0f + Constants::space_buffer;
         
         Constants::space_buffer -= 0.1f;
         if (std::abs(Constants::space_buffer) < 0.01f) {
@@ -245,7 +245,7 @@ private:
     }
 
     if (success) {
-      std::cout << "planner success with buffer " << Constants::space_buffer << std::endl;
+      std::cout << "planner success with buffer " << Constants::space_buffer + 0.1f << std::endl;
     } else {
       std::cout << "planner failed" << std::endl;
     }

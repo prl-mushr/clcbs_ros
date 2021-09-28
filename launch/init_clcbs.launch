@@ -9,7 +9,7 @@
     <group if="$(arg map_server)">
         <include file="$(find mushr_base)/launch/includes/map_server.launch" />
     </group>
-    
+
     <!-- <node pkg="rosbag" type="record" name="bag_recorder" output='screen' args="record -o /home/mushr/catkin_ws/src/clcbs_ros/bags/ -e '(.*)' -x '(.*)/camera(.*)'" /> -->
     <node pkg="clcbs_ros" type="init_clcbs.py" name="init_clcbs" output="screen" />
 </launch>

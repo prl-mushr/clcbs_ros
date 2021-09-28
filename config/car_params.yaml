@@ -14,7 +14,7 @@ profiles: # definitions for constraint profiles
     LB: 0.05 # 0.08
     obsRadius: 0.4
     constraintWaitTime: 2
-    space_buffer: 0.3
+    space_buffer: 0.5 # buffer is relative to the car's dimensions
   pushing: # non-default profiles only need to specify non-default values
     allow_reverse: False
     steer_limit: 0.157 # 0.05 * pi
