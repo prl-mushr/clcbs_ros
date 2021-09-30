@@ -75,7 +75,7 @@ private:
 
   void ObsPoseCallback(const geometry_msgs::PoseArray::ConstPtr& msg) {
     std::cout << "get obs " << std::endl;
-    m_ini_obs = true;  
+    m_ini_obs = true;
     for (auto &pose : msg->poses) {
       m_obs_pose.emplace_back(pose.position.x, pose.position.y);
     }
@@ -184,26 +184,28 @@ private:
       Environment mapf(dimx, dimy, obstacles, dynamic_obstacles, cur_goals, within_time);
       CL_CBS<State, Action, Cost, Conflict, Constraints, Environment>
           cbs(mapf);
-      
+
       // Plan to 0.5m behind goal to allow for a straight path at the end, then plan straight path to goal
       std::vector<PlanResult<State, Action, Cost>> mid_solution;
       std::vector<PlanResult<State, Action, Cost>> sub_solution;
 
       bool buffer_success = false;
       while (!buffer_success && Constants::space_buffer >= 0.0f) {
-        Constants::carWidth *= 1.0f + 2 * Constants::space_buffer;
-        Constants::LF *= 1.0f + Constants::space_buffer;
-        Constants::LB *= 1.0f + Constants::space_buffer;
+        Constants::carWidth += 2 * Constants::space_buffer;
+        double old_LF = Constants::LF;
+        double old_LB = Constants::LB;
+        Constants::LF += Constants::space_buffer * (old_LF + old_LB) / 2;
+        Constants::LB += Constants::space_buffer * (old_LF + old_LB) / 2;
 
         *within_time = true;
         mid_solution.clear();
         sub_solution.clear();
         buffer_success = mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution) && *within_time;
 
-        Constants::carWidth /= 1.0f + 2 * Constants::space_buffer;
-        Constants::LF /= 1.0f + Constants::space_buffer;
-        Constants::LB /= 1.0f + Constants::space_buffer;
-        
+        Constants::carWidth -= 2 * Constants::space_buffer;
+        Constants::LF = old_LF;
+        Constants::LB = old_LB;
+
         Constants::space_buffer -= 0.1f;
         if (std::abs(Constants::space_buffer) < 0.01f) {
           Constants::space_buffer = 0.0f;
@@ -262,7 +264,7 @@ private:
           double prev_time = 0.0;
           for (size_t i = 0; i < solution[j].states.size(); i++) {
             geometry_msgs::Pose p;
-                        
+
             double x = r_scalex(solution[j].states[i].first.x);
             double y = r_scaley(solution[j].states[i].first.y);
             double time = solution[j].states[i].first.time;
@@ -293,7 +295,7 @@ private:
         std::cout << "publish plan for car " << a + 1 << std::endl;
       }
     }
-    
+
     m_goal_pose.clear();
     m_obs_pose.clear();
     m_car_pose = std::vector<State>(m_max_agent);
@@ -319,7 +321,7 @@ private:
     marker.points.push_back(p);
     p.x = m_minx; p.y = m_maxy; p.z = 0.0;
     marker.points.push_back(p);
-    
+
     marker.color.r = r;
     marker.color.g = b;
     marker.color.b = g;
@@ -377,7 +379,7 @@ private:
 
   double b_color(std::string hex) {
     int hexValue = std::stoi(hex, 0, 16);
-    return ((hexValue) & 0xFF) / 255.0; 
+    return ((hexValue) & 0xFF) / 255.0;
   }
 
   bool isReady() {
