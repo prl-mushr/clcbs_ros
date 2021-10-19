@@ -5,6 +5,7 @@ minx: 0
 miny: 0
 maxx: 3
 maxy: 5
+randomness: [0.2, 0.2, 0.0]
 
 car1:
   start: [3, 0, 1.5708]

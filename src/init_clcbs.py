@@ -2,11 +2,9 @@
 
 import rospy
 import tf
-from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Quaternion,PoseWithCovarianceStamped
-import time
-import math
+from geometry_msgs.msg import PoseStamped, PoseArray, Pose, Quaternion, PoseWithCovarianceStamped
+import random
 from clcbs_ros.msg import GoalPoseArray
-from std_msgs.msg import String
 
 
 testing_standalone = False  # set to false if testing the whole system as one unit. When testing as standalone, don't launch clcbs_node
@@ -21,6 +19,11 @@ if __name__ == "__main__":
 
     num_agent = rospy.get_param("/init_clcbs/num_agent")
     num_waypoint = rospy.get_param("/init_clcbs/num_waypoint")
+    randomness = rospy.get_param("/init_clcbs/randomness")
+    x_min = rospy.get_param("/init_clcbs/minx")
+    x_max = rospy.get_param("/init_clcbs/maxx")
+    y_min = rospy.get_param("/init_clcbs/miny")
+    y_max = rospy.get_param("/init_clcbs/maxy")
     pubs = []
     pose_pubs = []
     target_pub = []
@@ -54,10 +57,10 @@ if __name__ == "__main__":
         carmsg.header.stamp = now
 
         start_pose = rospy.get_param("/init_clcbs/car" + str(i + 1) + "/start")
-        carmsg.pose.position.x = start_pose[0]
-        carmsg.pose.position.y = start_pose[1]
+        carmsg.pose.position.x = min(x_max, max(x_min, start_pose[0] + random.uniform(-randomness[0], randomness[0])))
+        carmsg.pose.position.y = min(x_max, max(x_min, start_pose[1] + random.uniform(-randomness[1], randomness[1])))
         carmsg.pose.position.z = 0.0
-        carmsg.pose.orientation = angle_to_quaternion(start_pose[2])
+        carmsg.pose.orientation = angle_to_quaternion(start_pose[2] + random.uniform(-randomness[2], randomness[2]))
 
         cur_pose = PoseWithCovarianceStamped()
         cur_pose.header.frame_id = "/map"
@@ -79,10 +82,10 @@ if __name__ == "__main__":
     goalmsg.num_agent = num_agent
     goalmsg.num_waypoint = num_waypoint
     goalmsg.scale = rospy.get_param("/init_clcbs/scale")
-    goalmsg.minx = rospy.get_param("/init_clcbs/minx")
-    goalmsg.miny = rospy.get_param("/init_clcbs/miny")
-    goalmsg.maxx = rospy.get_param("/init_clcbs/maxx")
-    goalmsg.maxy = rospy.get_param("/init_clcbs/maxy")
+    goalmsg.minx = x_min
+    goalmsg.miny = y_min
+    goalmsg.maxx = x_max
+    goalmsg.maxy = y_max
     for i in range(num_agent):
         goalmsg.goals.append(PoseArray())
         waypoints = rospy.get_param("/init_clcbs/car" + str(i + 1) + "/waypoints")
