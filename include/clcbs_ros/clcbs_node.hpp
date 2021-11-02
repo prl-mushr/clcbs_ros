@@ -200,15 +200,18 @@ private:
         *within_time = true;
         mid_solution.clear();
         sub_solution.clear();
+        std::cout << "Trying with buffer " << Constants::space_buffer << std::endl;
         buffer_success = mid_cbs.search(startStates, mid_solution) && cbs.search(mid_goals, sub_solution) && *within_time;
 
         Constants::carWidth -= 2 * Constants::space_buffer;
         Constants::LF = old_LF;
         Constants::LB = old_LB;
 
-        Constants::space_buffer -= 0.1f;
-        if (std::abs(Constants::space_buffer) < 0.01f) {
-          Constants::space_buffer = 0.0f;
+        if (!buffer_success) {
+          Constants::space_buffer -= 0.1f;
+          if (std::abs(Constants::space_buffer) < 0.01f) {
+            Constants::space_buffer = 0.0f;
+          }
         }
       }
       success &= buffer_success;
@@ -247,7 +250,7 @@ private:
     }
 
     if (success) {
-      std::cout << "planner success with buffer " << Constants::space_buffer + 0.1f << std::endl;
+      std::cout << "planner success with buffer " << Constants::space_buffer << std::endl;
     } else {
       std::cout << "planner failed" << std::endl;
     }
