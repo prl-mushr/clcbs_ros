@@ -4,6 +4,8 @@
 #include <ompl/base/spaces/DubinsStateSpace.h>
 #include <ompl/base/spaces/ReedsSheppStateSpace.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
+#include <ompl/base/ScopedState.h>
+#include <ompl/geometric/SimpleSetup.h>
 
 #include <boost/functional/hash.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -637,6 +639,95 @@ class Environment {
   }
 
   bool isSolutionWithoutReverse(
+      const State &state, double gscore,
+      std::unordered_map<State, std::tuple<State, Action, double, double>,
+                         std::hash<State>> &_camefrom) {
+    double goal_distance =
+        sqrt(pow(state.x - getGoal().x, 2) + pow(state.y - getGoal().y, 2));
+    if (goal_distance > 3 * (Constants::LB + Constants::LF)) return false;
+
+    ompl::base::StateSpacePtr space(std::make_shared<ompl::base::DubinsStateSpace>(Constants::r));
+    ompl::base::ScopedState<> start(space), goal(space);
+    ompl::base::RealVectorBounds bounds(2);
+    bounds.setLow(0);
+    bounds.setHigh(0, m_dimx * Constants::mapResolution);
+    bounds.setHigh(1, m_dimy * Constants::mapResolution);
+    space->as<ompl::base::SE2StateSpace>()->setBounds(bounds);
+
+    ompl::geometric::SimpleSetup ss(space);
+    ss.setStateValidityChecker([this, state](const ompl::base::State *ompl_state)
+      {
+        const ompl::base::DubinsStateSpace::StateType* dubins_state = ompl_state->as<ompl::base::DubinsStateSpace::StateType>();
+        State next_state(dubins_state->getX(), dubins_state->getY(),
+                         Constants::normalizeHeadingRad(dubins_state->getYaw()), state.time + 1);
+        return this->stateValid(next_state);
+      }
+    );
+
+    start[0] = state.x;
+    start[1] = state.y;
+    start[2] = -state.yaw;
+    while (start[2] > M_PI) {
+      start[2] -= 2 * M_PI;
+    }
+    while (start[2] <= -M_PI) {
+      start[2] += 2 * M_PI;
+    }
+
+    goal[0] = getGoal().x;
+    goal[1] = getGoal().y;
+    goal[2] = -getGoal().yaw;
+    while (goal[2] > M_PI) {
+      goal[2] -= 2 * M_PI;
+    }
+    while (goal[2] <= -M_PI) {
+      goal[2] += 2 * M_PI;
+    }
+
+    ss.setStartAndGoalStates(start, goal);
+    ompl::base::PlannerStatus solved = ss.solve();
+    if (!solved)
+    {
+      return false;
+    }
+
+    ompl::geometric::PathGeometric sol = ss.getSolutionPath();
+    
+    std::vector<State> path;
+    std::unordered_map<State, std::tuple<State, Action, double, double>,
+                       std::hash<State>>
+        cameFrom;
+    cameFrom.clear();
+    path.emplace_back(state);
+
+    for (ompl::base::State* state_ptr : sol.getStates()) {
+      ompl::base::DubinsStateSpace::StateType* sol_state = state_ptr->as<ompl::base::DubinsStateSpace::StateType>();
+      State next_state(sol_state->getX(), sol_state->getY(),
+                       Constants::normalizeHeadingRad(sol_state->getYaw()), path.back().time + 1);
+      if (!stateValid(next_state)) {
+        return false;
+      }
+      double added_score = 0; //std::hypot(next_state.x - path.back().x, next_state.y - path.back().y);  // TODO FIX THIS
+      gscore += added_score;
+      if (!(next_state == path.back())) {
+        cameFrom.insert(std::make_pair<>(
+            next_state,
+            std::make_tuple<>(path.back(), 0 /* TODO FIX THIS */, added_score, gscore)));
+      }
+      path.emplace_back(next_state);
+    }
+
+    if (path.back().time <= m_lastGoalConstraint) {
+      return false;
+    }
+
+    m_goals[m_agentIdx] = path.back();
+
+    _camefrom.insert(cameFrom.begin(), cameFrom.end());
+    return true;
+  }
+
+  bool isSolutionWithoutReverse2(
       const State &state, double gscore,
       std::unordered_map<State, std::tuple<State, Action, double, double>,
                          std::hash<State>> &_camefrom) {
