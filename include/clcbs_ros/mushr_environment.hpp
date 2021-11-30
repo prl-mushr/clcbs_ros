@@ -48,6 +48,8 @@ static float penaltyReversing = 2.0;
 // [#] --- A movement cost penalty for change of direction (changing from
 // primitives < 3 to primitives > 2)
 static float penaltyCOD = 2.0;
+// weight of heuristic for A*
+static float heuristicWeight = 2.0;
 // map resolution
 static float mapResolution = 1.0;
 // change to set calcIndex resolution
@@ -525,8 +527,7 @@ class Environment {
         twoDoffset;
     // std::cout << "holonomic cost:" << twoDCost << std::endl;
 
-    return std::max({reedsSheppCost, euclideanCost, twoDCost});
-    return 0;
+    return Constants::heuristicWeight * std::max({reedsSheppCost, euclideanCost, twoDCost});
   }
 
   bool isSolution(

@@ -429,7 +429,7 @@ private:
 
   void setCarParams(int waypoint) {
     float L, speed_limit, steer_limit, deltat, penaltyTurning, penaltyHardTurning, penaltyReversing;
-    float penaltyCOD, mapResolution, carWidth, LF, LB, obsRadius, space_buffer;
+    float penaltyCOD, heuristicWeight, mapResolution, carWidth, LF, LB, obsRadius, space_buffer;
     int constraintWaitTime;
     bool allow_reverse;
 
@@ -461,6 +461,9 @@ private:
     }
     if (!nh.getParam(name + "penaltyCOD", penaltyCOD)) {
       nh.getParam(def + "penaltyCOD", penaltyCOD);
+    }
+    if (!nh.getParam(name + "heuristicWeight", heuristicWeight)) {
+      nh.getParam(def + "heuristicWeight", heuristicWeight);
     }
     if (!nh.getParam(name + "mapResolution", mapResolution)) {
       nh.getParam(def + "mapResolution", mapResolution);
@@ -497,6 +500,7 @@ private:
     Constants::penaltyHardTurning = penaltyHardTurning;
     Constants::penaltyReversing = penaltyReversing;
     Constants::penaltyCOD = penaltyCOD;
+    Constants::heuristicWeight = heuristicWeight;
     Constants::mapResolution = mapResolution;
     Constants::xyResolution = Constants::r * Constants::deltat;
     Constants::yawResolution = Constants::deltat;
