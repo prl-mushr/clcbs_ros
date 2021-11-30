@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
         start_pose = rospy.get_param("/init_clcbs/car" + str(i + 1) + "/start")
         carmsg.pose.position.x = min(x_max, max(x_min, start_pose[0] + random.uniform(-randomness[0], randomness[0])))
-        carmsg.pose.position.y = min(x_max, max(x_min, start_pose[1] + random.uniform(-randomness[1], randomness[1])))
+        carmsg.pose.position.y = min(y_max, max(y_min, start_pose[1] + random.uniform(-randomness[1], randomness[1])))
         carmsg.pose.position.z = 0.0
         carmsg.pose.orientation = angle_to_quaternion(start_pose[2] + random.uniform(-randomness[2], randomness[2]))
 
@@ -99,5 +99,5 @@ if __name__ == "__main__":
     goal_pub.publish(goalmsg)
     if(testing_standalone):
         for i in range(2):
-            goalmsg.goals[i].header.frame_id = "/map"    
+            goalmsg.goals[i].header.frame_id = "/map"
             target_pub[i].publish(goalmsg.goals[i])  # use when testing local planner as a standalone system
