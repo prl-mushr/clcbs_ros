@@ -1,0 +1,32 @@
+num_agent: 4
+num_waypoint: 1
+scale: 1
+minx: 0
+miny: 0
+maxx: 3
+maxy: 5
+randomness: [0.0, 0.0, 0.0]
+
+car1:
+  start: [3, 0, 1.5708]
+  waypoints: [
+    [0.1, 4.9, 1.5708]
+  ]
+
+car2:
+  start: [0, 0, 1.5708]
+  waypoints: [
+    [1.6, 4.9, 1.5708]
+  ]
+
+car3:
+  start: [3, 5, -1.5708]
+  waypoints: [
+    [1.4, 0.1, -1.5708]
+  ]
+
+car4:
+  start: [0, 5, -1.5708]
+  waypoints: [
+    [2.9, 0.1, -1.5708]
+  ]
