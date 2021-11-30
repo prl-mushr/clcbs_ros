@@ -40,6 +40,8 @@ static float deltat = speed_limit / r;
 // [#] --- A movement cost penalty for turning (choosing non straight motion
 // primitives)
 static float penaltyTurning = 1.5;
+// [#] --- A movement cost penalty for hard turning (changing from turning left to right or vice versa)
+static float penaltyHardTurning = 1.5;
 // [#] --- A movement cost penalty for reversing (choosing motion primitives >
 // 2)
 static float penaltyReversing = 2.0;
@@ -744,6 +746,9 @@ class Environment {
       // }
       if (act % 3 != 0) {  // penalize turning
         g = g * Constants::penaltyTurning;
+        if (action % 3 != 0 && action % 3 != act % 3) { // penalize hard turning
+          g = g * Constants::penaltyHardTurning;
+        }
       }
       if ((act < 3 && action >= 3) || (action < 3 && act >= 3)) {
         // penalize change of direction

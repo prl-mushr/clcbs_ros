@@ -6,6 +6,7 @@ profiles: # definitions for constraint profiles
     steer_limit: 0.314 # 0.1 * pi
     # To calculate turning radius, use r = L / tan(abs(steer_limit)))
     penaltyTurning: 1.5
+    penaltyHardTurning: 1.5
     penaltyReversing: 1.0
     penaltyCOD: 2.0
     mapResolution: 0.1
