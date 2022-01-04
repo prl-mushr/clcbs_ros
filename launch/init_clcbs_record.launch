@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+ <arg default="1" name="map_server"/>
+ <arg default="cars.yaml" name="cars_file"/>
+ <arg default="4cars_3x5_ex2.yaml" name="benchmark_file"/>
+ <arg default="clcbs_data_100" name="record_name"/>
+ <rosparam command="load" file="$(find clcbs_ros)/config/$(arg cars_file)" ns="init_clcbs"/>
+ <rosparam command="load" file="$(find clcbs_ros)/benchmark/$(arg benchmark_file)" ns="init_clcbs"/>
+ <!-- Launch  map server-->
+ <group if="$(arg map_server)">
+  <include file="$(find mushr_base)/launch/includes/map_server.launch"/>
+ </group>
+ <!-- <node pkg="rosbag" type="record" name="bag_recorder" output='screen' args="record -o /home/mushr/catkin_ws/src/clcbs_ros/bags/ -e '(.*)' -x '(.*)/camera(.*)'" /> -->
+ <node args="-q -a -o $(find clcbs_ros)/bags/$(arg record_name).bag" name="rosbag_record" output="screen" pkg="rosbag" type="record"/>
+ <node name="init_clcbs" output="screen" pkg="clcbs_ros" type="init_clcbs.py"/>
+</launch>
