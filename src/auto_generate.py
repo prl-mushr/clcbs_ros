@@ -5,7 +5,7 @@ from geometry_msgs.msg import PoseArray
 import os
 import subprocess
 import numpy as np
-import time 
+import time
 from bs4 import BeautifulSoup as bs
 import matplotlib.pyplot as plt
 
@@ -17,13 +17,8 @@ def pose_callback(msg):
     plan_pub = True  # plan has been published
 
 ## this helps us track whether the launch file has been completely shut down yet or not
-process_generate_running = True
 class ProcessListener(roslaunch.pmon.ProcessListener):
-    global process_generate_running
-
     def process_died(self, name, exit_code):
-        global process_generate_running  # set this variable to false when process has died cleanly.
-        process_generate_running = False
         rospy.logwarn("%s died with code %s", name, exit_code)
 
 def adjust_launch_file(filename, i):
@@ -33,14 +28,14 @@ def adjust_launch_file(filename, i):
     rec_name = bs_data.find("arg", {"name":"record_name"})
     rec_name["default"] = "clcbs_data_"+str(i+1)
 
-    output = bs_data.prettify()  # prettify doesn't actually make it prettier. 
+    output = bs_data.prettify()  # prettify doesn't actually make it prettier.
     with open(filename, 'w') as f:
         f.write(output)
 
 subscriber_ = rospy.Subscriber("/car1/waypoints", PoseArray, pose_callback)  # subscribe to car-pose to check collisions for first car (plans pubbed simultaneously)
 
 N = 100
-timeout = 60 # 10 second time out
+timeout = 30 # 30 second time out
 
 clcbs_launchfile = "/home/stark/catkin_mushr/src/clcbs_ros/launch/clcbs_ros.launch"
 init_launchfile = "/home/stark/catkin_mushr/src/clcbs_ros/launch/init_clcbs_record.launch"
@@ -49,12 +44,12 @@ bagdir = "/home/stark/catkin_mushr/src/clcbs_ros/bags"  # the cases where the ba
 failed = 0
 
 for i in range(N):
-    print("iteration " + str(i) + "starting")
+    print("iteration " + str(i) + " starting")
     iter_succ = False
     while(not iter_succ):
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
         roslaunch.configure_logging(uuid)
-        launch_clcbs = roslaunch.parent.ROSLaunchParent(uuid, 
+        launch_clcbs = roslaunch.parent.ROSLaunchParent(uuid,
                                                   [clcbs_launchfile],
                                                   process_listeners=[ProcessListener()])
         launch_clcbs.start()
@@ -62,10 +57,9 @@ for i in range(N):
 
 
         adjust_launch_file(init_launchfile, i)
-        process_generate_running = True
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
         roslaunch.configure_logging(uuid)
-        launch = roslaunch.parent.ROSLaunchParent(uuid, 
+        launch = roslaunch.parent.ROSLaunchParent(uuid,
                                                   [init_launchfile],
                                                   process_listeners=[ProcessListener()])
         plan_pub = False  # reset plan published flag before starting new cycle
@@ -75,10 +69,8 @@ for i in range(N):
             rospy.sleep(1)
         launch.shutdown()
         launch_clcbs.shutdown()
-        while(process_generate_running):
-            rospy.sleep(1)
-        print("waiting 5 seconds for clean exit")
-        time.sleep(5)
+        print("waiting 10 seconds for clean exit")
+        time.sleep(10)
         if plan_pub:
             iter_succ = True  # if plan wasn't published we shall try again until it is.
         else:

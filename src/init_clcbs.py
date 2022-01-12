@@ -25,6 +25,7 @@ def angle_to_quaternion(angle):
 
 if __name__ == "__main__":
     rospy.init_node("init_clcbs")
+    rospy.sleep(1)
 
     num_agent = rospy.get_param("/init_clcbs/num_agent")
     num_waypoint = rospy.get_param("/init_clcbs/num_waypoint")
@@ -86,6 +87,7 @@ if __name__ == "__main__":
         cur_pose.header.stamp = now
         cur_pose.pose.pose = carmsg.pose
         print(carmsg)
+        rospy.sleep(1)
         pubs[i].publish(carmsg)
         pose_pubs[i].publish(cur_pose)
 
