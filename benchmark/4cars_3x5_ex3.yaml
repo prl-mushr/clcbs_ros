@@ -5,7 +5,7 @@ minx: 0
 miny: 0
 maxx: 3
 maxy: 5
-randomness: [0.0, 0.0, 0.0]
+randomness: [0.2, 0.2, 0.0]
 
 
 car1:
