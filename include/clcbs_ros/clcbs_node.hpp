@@ -277,7 +277,7 @@ private:
 
             p.position.x = x;
             p.position.y = y;
-            p.position.z = (time - prev_time) * (Constants::xyResolution / Constants::speed_limit) * 0.001;
+            p.position.z = (time - prev_time) * 0.001 / m_scale;
             p.orientation = tf2::toMsg(quat);
 
             plan.poses.push_back(p);
