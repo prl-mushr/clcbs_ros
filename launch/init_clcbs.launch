@@ -1,7 +1,7 @@
 <launch>
     <arg name="map_server" default="1" />
     <arg name="cars_file" default="cars.yaml" />
-    <arg name="benchmark_file" default="4cars_3x5_ex2.yaml" />
+    <arg name="benchmark_file" default="4cars_4x6_2wp_ex2.yaml" />
     <rosparam file="$(find clcbs_ros)/config/$(arg cars_file)" command="load" ns="init_clcbs" />
     <rosparam file="$(find clcbs_ros)/benchmark/$(arg benchmark_file)" command="load" ns="init_clcbs" />
 

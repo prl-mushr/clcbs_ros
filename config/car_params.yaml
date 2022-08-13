@@ -24,5 +24,5 @@ profiles: # definitions for constraint profiles
 
 # which profile to use when navigating to each waypoint (0 indexed)
 # if a profile is not specified for a waypoint, default profile is used
-profile0: "pushing"
-profile1: "default"
+profile0: "default"
+profile1: "pushing"
