@@ -1,19 +1,19 @@
 profiles: # definitions for constraint profiles
   default: # default profile must exist
-    allow_reverse: True
+    allow_reverse: False
     L: 0.29
     speed_limit: 0.4
-    steer_limit: 0.314 # 0.1 * pi
+    steer_limit: 0.3 # 0.1 * pi
     # To calculate turning radius, use r = L / tan(abs(steer_limit)))
-    penaltyTurning: 1.5
-    penaltyHardTurning: 1.5
-    penaltyReversing: 1.0
+    penaltyTurning: 1.5 #100
+    penaltyHardTurning: 1.5 #100
+    penaltyReversing: 200.0
     penaltyCOD: 2.0
     heuristicWeight: 2.0
     mapResolution: 0.1
-    carWidth: 0.25 # 0.27
-    LF: 0.30 # 0.38
-    LB: 0.05 # 0.08
+    carWidth: 0.35 # 0.27
+    LF: 0.40 # 0.38
+    LB: 0.1 # 0.08
     obsRadius: 0.4
     constraintWaitTime: 2
     space_buffer: 0.0 # buffer is relative to the car's dimensions
