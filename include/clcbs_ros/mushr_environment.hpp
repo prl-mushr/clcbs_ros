@@ -645,7 +645,7 @@ class Environment {
                          std::hash<State>> &_camefrom) {
     double goal_distance =
         sqrt(pow(state.x - getGoal().x, 2) + pow(state.y - getGoal().y, 2));
-    if (goal_distance > 3 * (Constants::LB + Constants::LF)) return false;
+    if (goal_distance > 10 * (Constants::LB + Constants::LF)) return false;
     ompl::base::DubinsStateSpace dubinsSpace(Constants::r);
     OmplState *dubinsStart = (OmplState *)dubinsSpace.allocState();
     OmplState *dubinsEnd = (OmplState *)dubinsSpace.allocState();
