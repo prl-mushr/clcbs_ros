@@ -165,16 +165,25 @@ private:
       // get goals for current waypoint
       std::vector<State> mid_goals;
       std::vector<State> cur_goals;
-      for (auto& waypoints : goals) {
+      double state_eps = 0.01;
+      for (int j = 0; j < goals.size(); j++) {
+        auto waypoints = goals[j];
         double x = waypoints[i].x;
         double y = waypoints[i].y;
         double yaw = waypoints[i].yaw;
 
-        x -= offset * std::cos(yaw);
-        y -= offset * std::sin(yaw);
+        if (std::abs(scalex(x) - startStates[j].x) > state_eps || std::abs(scaley(y) - startStates[j].y) > state_eps || std::abs(yaw + startStates[j].yaw) > state_eps) {
+          x -= offset * std::cos(yaw);
+          y -= offset * std::sin(yaw);
+        }
 
-        mid_goals.emplace_back(scalex(x - 0.5 * std::cos(yaw)), scaley(y - 0.5 * std::sin(yaw)), -yaw);
-        cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
+        if (std::abs(scalex(x) - startStates[j].x) > state_eps || std::abs(scaley(y) - startStates[j].y) > state_eps || std::abs(yaw + startStates[j].yaw) > state_eps) {
+          mid_goals.emplace_back(scalex(x - 0.5 * std::cos(yaw)), scaley(y - 0.5 * std::sin(yaw)), -yaw);
+          cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
+        } else {
+          mid_goals.emplace_back(scalex(x), scaley(y), -yaw);
+          cur_goals.emplace_back(scalex(x), scaley(y), -yaw);
+        }
       }
 
       Environment mid_mapf(dimx, dimy, obstacles, dynamic_obstacles, mid_goals, within_time);
@@ -233,9 +242,12 @@ private:
       }
 
       // Add pushed blocks as obstacles if they're being dropped off
-      if (profile == "pushing" && next_profile != "pushing") {
-        for (auto& waypoints : goals) {
-          obstacles.emplace(scalex(waypoints[i].x), scaley(waypoints[i].y));
+      if (profile == "pushing" && next_profile != "pushing" && i + 1 < m_num_waypoint) {
+        for (int j = 0; j < goals.size(); j++) {
+          auto waypoints = goals[j];
+          if (std::abs(scalex(waypoints[i + 1].x - offset * std::cos(waypoints[i + 1].yaw)) - startStates[j].x) > state_eps || std::abs(scaley(waypoints[i + 1].y - offset * std::sin(waypoints[i + 1].yaw)) - startStates[j].y) > state_eps || std::abs(waypoints[i + 1].yaw + startStates[j].yaw) > state_eps) {
+            obstacles.emplace(scalex(waypoints[i].x), scaley(waypoints[i].y));
+          }
         }
       }
 

@@ -61,7 +61,7 @@ static float LF = 0.30f;
 // distance from rear to vehicle back end
 static float LB = 0.05f;
 // obstacle default radius
-static float obsRadius = 1;
+static float obsRadius = 0.1;
 // least time to wait for constraint
 static int constraintWaitTime = 2;
 // buffer space around each side of the agent
@@ -506,6 +506,8 @@ class Environment {
     end->setXY(m_goals[m_agentIdx].x, m_goals[m_agentIdx].y);
     end->setYaw(m_goals[m_agentIdx].yaw);
     reedsSheppCost = path->distance(start, end);
+    path->freeState(start);
+    path->freeState(end);
     // std::cout << "ReedsShepps cost:" << reedsSheppCost << std::endl;
     // Euclidean distance
     double euclideanCost = sqrt(pow(m_goals[m_agentIdx].x - s.x, 2) +
@@ -564,6 +566,8 @@ class Environment {
     rsEnd->setYaw(-getGoal().yaw);
     ompl::base::ReedsSheppStateSpace::ReedsSheppPath reedsShepppath =
         reedsSheppSpace.reedsShepp(rsStart, rsEnd);
+    reedsSheppSpace.freeState(rsStart);
+    reedsSheppSpace.freeState(rsEnd);
 
     std::vector<State> path;
     std::unordered_map<State, std::tuple<State, Action, double, double>,
@@ -635,6 +639,12 @@ class Environment {
 
     m_goals[m_agentIdx] = path.back();
 
+    if (cameFrom.empty()) {
+      cameFrom.insert(std::make_pair<>(
+          state,
+          std::make_tuple<>(State(-1, -1, -1, -1), 6, 0, gscore)));  // dummy state
+    }
+
     _camefrom.insert(cameFrom.begin(), cameFrom.end());
     return true;
   }
@@ -655,6 +665,8 @@ class Environment {
     dubinsEnd->setYaw(-getGoal().yaw);
     ompl::base::DubinsStateSpace::DubinsPath dubinsPath =
         dubinsSpace.dubins(dubinsStart, dubinsEnd);
+    dubinsSpace.freeState(dubinsStart);
+    dubinsSpace.freeState(dubinsEnd);
 
     std::vector<State> path;
     std::unordered_map<State, std::tuple<State, Action, double, double>,
@@ -718,6 +730,12 @@ class Environment {
     }
 
     m_goals[m_agentIdx] = path.back();
+
+    if (cameFrom.empty()) {
+      cameFrom.insert(std::make_pair<>(
+          state,
+          std::make_tuple<>(State(-1, -1, -1, -1), 6, 0, gscore)));
+    }
 
     _camefrom.insert(cameFrom.begin(), cameFrom.end());
     return true;
