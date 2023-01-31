@@ -305,7 +305,7 @@ private:
         double marker_size = 0.25;
         for (int i = 0; i < m_num_waypoint; i++) {
           visualization_msgs::Marker marker;
-          create_marker(&marker, &mkid, m_goal_pose[a][i].x, m_goal_pose[a][i].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, i);
+          create_marker(&marker, &mkid, m_goal_pose[a][i].x, m_goal_pose[a][i].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, i % 2 == 0 && !(i > 0 && m_goal_pose[a][i] == m_goal_pose[a][i-1]));
           m_pub_marker[a].publish(marker);
         }
 
@@ -359,7 +359,7 @@ private:
     m_pub_border.publish(marker);
   }
 
-  void create_marker(visualization_msgs::Marker* marker, int* mkid, double x, double y, double r, double g, double b, double size, int last) {
+  void create_marker(visualization_msgs::Marker* marker, int* mkid, double x, double y, double r, double g, double b, double size, bool pickup) {
     marker->pose.position.x = x;
     marker->pose.position.y = y;
     marker->pose.position.z = 0;
@@ -382,7 +382,7 @@ private:
     marker->header.stamp = ros::Time();
     marker->id = (*mkid)++;
 
-    marker->type = last ? visualization_msgs::Marker::SPHERE : visualization_msgs::Marker::CUBE;
+    marker->type = pickup ? visualization_msgs::Marker::CUBE : visualization_msgs::Marker::SPHERE;
     marker->action = visualization_msgs::Marker::ADD;
   }
 
