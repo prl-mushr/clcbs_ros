@@ -292,7 +292,7 @@ private:
             p.position.z = (time - prev_time) * 0.001 / m_scale;
             p.orientation = tf2::toMsg(quat);
 
-            if ((solution[j].actions[i].first >= 3 && solution[j].actions[i].first < 6) || (solution[j].actions[i].first == 6 && plan.poses.back().position.z < 0)) {
+            if ((solution[j].actions[i].first >= 3 && solution[j].actions[i].first < 6) || (solution[j].actions[i].first == 6 && !plan.poses.empty() && plan.poses.back().position.z < 0)) {
               p.position.z *= -1;
             }
 

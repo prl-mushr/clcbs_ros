@@ -1,6 +1,6 @@
 profiles: # definitions for constraint profiles
   default: # default profile must exist
-    allow_reverse: True
+    allow_reverse: False
     L: 0.29
     speed_limit: 0.4
     steer_limit: 0.35 # 0.1 * pi
@@ -21,10 +21,12 @@ profiles: # definitions for constraint profiles
     allow_reverse: False
     steer_limit: 0.18
     LF: 0.50 # 0.58 # includes length of block being pushed
+  backup: # back up after pushing a block
+    allow_reverse: True
 
 # which profile to use when navigating to each waypoint (0 indexed)
 # if a profile is not specified for a waypoint, default profile is used
 profile0: "default"
 profile1: "pushing"
-profile2: "default"
+profile2: "backup"
 profile3: "pushing"
