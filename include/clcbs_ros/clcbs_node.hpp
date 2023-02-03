@@ -304,9 +304,11 @@ private:
         // publish waypoint markers
         double marker_size = 0.25;
         for (int i = 0; i < m_num_waypoint; i++) {
-          visualization_msgs::Marker marker;
-          create_marker(&marker, &mkid, m_goal_pose[a][i].x, m_goal_pose[a][i].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, i % 2 == 0 && !(i > 0 && m_goal_pose[a][i] == m_goal_pose[a][i-1]));
-          m_pub_marker[a].publish(marker);
+          if (!(i > 0 && m_goal_pose[a][i] == m_goal_pose[a][i-1] || i == 0 && m_goal_pose[a][i] == m_car_pose[a])) {
+            visualization_msgs::Marker marker;
+            create_marker(&marker, &mkid, m_goal_pose[a][i].x, m_goal_pose[a][i].y, r_color(m_car_color[a]), g_color(m_car_color[a]), b_color(m_car_color[a]), marker_size, i % 2 == 0);
+            m_pub_marker[a].publish(marker);
+          }
         }
 
         m_pub_plan[a].publish(plan);
